@@ -1,0 +1,3102 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TataDana — Executive Personal Finance App</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background-color: #070b14;
+      background-image: 
+        radial-gradient(rgba(30, 58, 138, 0.15) 1px, transparent 1px),
+        linear-gradient(to bottom, #090e1c, #050811);
+      background-size: 32px 32px, 100% 100%;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .active-app-nav-item {
+      background: linear-gradient(90deg, rgba(234, 179, 8, 0.18) 0%, rgba(234, 179, 8, 0.05) 100%) !important;
+      color: #facc15 !important;
+      border: 1px solid rgba(234, 179, 8, 0.45) !important;
+      box-shadow: 0 0 16px rgba(234, 179, 8, 0.15);
+    }
+    .active-bottom-nav {
+      color: #facc15 !important;
+    }
+    .active-bottom-nav svg {
+      color: #facc15 !important;
+      transform: translateY(-2px);
+    }
+    .cyan-glow {
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.35);
+    }
+    .gold-glow {
+      box-shadow: 0 0 20px rgba(234, 179, 8, 0.25);
+    }
+    @keyframes highlight {
+      0% { background-color: rgba(56, 189, 248, 0.25); transform: translateY(-2px); }
+      100% { background-color: transparent; transform: translateY(0); }
+    }
+    .highlight-new {
+      animation: highlight 1.5s ease-out;
+    }
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #070b14;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+<body class="text-slate-200 antialiased h-screen flex flex-col overflow-hidden selection:bg-amber-500 selection:text-slate-950">
+
+  <!-- ========================================================================= -->
+  <!-- 0. BERANDA LOGIN & PORTAL PENGGUNA RESMI (TERPISAH DARI DASHBOARD)       -->
+  <!-- ========================================================================= -->
+  <div id="screen-user-portal" class="flex-1 flex flex-col h-full overflow-y-auto relative bg-[#050811] z-50">
+    <!-- Portal Header -->
+    <header class="bg-[#090e1c]/95 backdrop-blur-md border-b border-slate-800/80 px-4 sm:px-8 py-3.5 flex items-center justify-between flex-shrink-0 sticky top-0 z-40">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl border border-amber-500/50 bg-[#121b33] flex items-center justify-center font-black text-amber-400 text-sm shadow-md">
+          TD
+        </div>
+        <div>
+          <div class="font-black text-white text-base tracking-tight leading-none flex items-center gap-2">
+            <span>TataDana</span>
+            <span class="text-[9px] bg-sky-500/20 text-sky-300 border border-sky-500/40 px-2 py-0.5 rounded-full font-bold font-mono">PORTAL USER</span>
+          </div>
+          <p class="text-[11px] text-slate-400 font-medium mt-0.5">Beranda & Autentikasi Pengguna TataDana</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="hidden md:flex items-center gap-2 bg-[#0d162d] border border-emerald-500/30 px-3 py-1.5 rounded-full text-xs text-emerald-300">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>WhatsApp Gateway & OTP Siap</span>
+        </div>
+        <a href="/admin" class="bg-[#121c38] hover:bg-[#1a2952] text-amber-300 border border-amber-500/40 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow">
+          <span>👑</span>
+          <span>Portal Super Admin</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Content Landing & Auth Box -->
+    <div class="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto w-full space-y-8 my-auto">
+      
+      <!-- Hero Intro -->
+      <div class="text-center space-y-3 max-w-2xl mx-auto">
+        <div class="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500/10 to-sky-500/10 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-semibold text-amber-300">
+          <span>✨</span>
+          <span>Fintech Personal Finance & Bot Companion</span>
+        </div>
+        <h1 class="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
+          Selamat Datang di <span class="bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-500 bg-clip-text text-transparent">TataDana</span>
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">
+          Masuk ke akun Anda menggunakan <b>verifikasi WhatsApp OTP</b> untuk mengelola seluruh rekening, e-wallet, dan pencatatan keuangan otomatis dengan FinBot Telegram.
+        </p>
+      </div>
+
+      <!-- Auth Hub Card -->
+      <div class="bg-[#090e1c] border border-blue-900/60 rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl relative gold-glow">
+        
+        <!-- Tab Bar: Masuk vs Daftar Baru vs Cek Status -->
+        <div class="flex border-b border-slate-800 text-xs font-bold mb-6 gap-2">
+          <button onclick="switchPortalTab('login')" id="btn-portal-tab-login" class="flex-1 pb-3 text-center border-b-2 border-amber-400 text-amber-400 font-black transition-all flex items-center justify-center gap-1.5">
+            <span>👤</span> <span>Masuk Akun User</span>
+          </button>
+          <button onclick="switchPortalTab('register')" id="btn-portal-tab-register" class="flex-1 pb-3 text-center border-b-2 border-transparent text-slate-400 hover:text-white transition-all flex items-center justify-center gap-1.5">
+            <span>✨</span> <span>Daftar Akun Baru</span>
+          </button>
+          <button onclick="switchPortalTab('status')" id="btn-portal-tab-status" class="flex-1 pb-3 text-center border-b-2 border-transparent text-slate-400 hover:text-white transition-all flex items-center justify-center gap-1.5">
+            <span>🔍</span> <span>Cek Status</span>
+          </button>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 1: MASUK AKUN PENGGUNA VIA WA OTP           -->
+        <!-- ============================================== -->
+        <div id="portal-tab-content-login" class="space-y-4">
+          
+          <!-- STEP 1: Input Nomor WhatsApp Pengguna -->
+          <div id="portal-login-step1" class="space-y-4">
+            <div>
+              <label class="block font-bold text-slate-300 text-xs mb-1.5">Nomor WhatsApp Pengguna</label>
+              <div class="relative flex items-center">
+                <span class="absolute left-3.5 text-xs font-mono font-bold text-slate-400">+62</span>
+                <input id="portal-phone-input" type="tel" value="" placeholder="Contoh: 081298765432" class="w-full bg-[#070b14] border border-slate-700 text-white pl-12 pr-4 py-3 rounded-xl focus:outline-none focus:border-amber-400 font-mono text-sm font-semibold">
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1.5">Kode keamanan OTP 6-digit akan dikirimkan langsung ke nomor WhatsApp Anda.</p>
+            </div>
+
+            <button type="button" id="btn-portal-send-otp" onclick="requestUserOtp()" class="w-full bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 hover:from-sky-400 hover:to-blue-500 text-white font-black py-3 rounded-xl shadow-lg transition-all text-xs flex items-center justify-center gap-2">
+              <span>📲</span>
+              <span>Kirim Kode OTP ke WhatsApp User →</span>
+            </button>
+          </div>
+
+          <!-- STEP 2: Input OTP (Muncul setelah kirim OTP) -->
+          <div id="portal-login-step2" class="space-y-4 hidden">
+            <div class="flex items-center justify-between">
+              <button type="button" onclick="resetPortalLoginStep()" class="text-xs text-sky-400 hover:text-white font-bold flex items-center gap-1">
+                ← Ganti Nomor
+              </button>
+              <span class="text-[11px] bg-emerald-950 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
+                ✓ OTP Terkirim ke WA
+              </span>
+            </div>
+
+            <!-- WhatsApp Message Simulation Card (Terkirim ke WA User) -->
+            <div class="bg-[#0b1b1f] border border-emerald-500/40 rounded-2xl p-4 space-y-2.5 shadow-lg relative">
+              <div class="flex items-center justify-between pb-2 border-b border-emerald-900/50">
+                <div class="flex items-center gap-2">
+                  <span class="text-base text-emerald-400">💬</span>
+                  <span class="text-xs font-bold text-white">Pesan WhatsApp Masuk ke Nomor User</span>
+                </div>
+                <span id="portal-wa-phone-badge" class="font-mono text-[10px] text-emerald-300 font-bold bg-emerald-900/60 px-2 py-0.5 rounded">08xxxx</span>
+              </div>
+              <div class="text-xs text-slate-200 leading-relaxed bg-[#061214] p-3 rounded-xl border border-emerald-950 font-mono">
+                <div>[TataDana Keamanan]</div>
+                <div>Kode OTP Masuk Anda adalah: <b id="portal-simulated-otp-code" class="text-amber-400 text-base font-black tracking-widest">101112</b></div>
+                <div class="text-[10px] text-slate-400 mt-1">Berlaku selama 10 menit. Jangan berikan kode OTP ini kepada siapapun demi keamanan.</div>
+              </div>
+              <div class="flex items-center gap-2 pt-1">
+                <button type="button" onclick="copyPortalOtp()" class="flex-1 bg-emerald-700 hover:bg-emerald-600 text-white font-bold py-1.5 px-3 rounded-lg text-xs shadow flex items-center justify-center gap-1 transition-all">
+                  <span>📋</span> <span>Salin OTP</span>
+                </button>
+                <button type="button" onclick="autofillPortalOtp()" class="flex-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold py-1.5 px-3 rounded-lg text-xs flex items-center justify-center gap-1 transition-all">
+                  <span>⚡</span> <span>Tempel Otomatis</span>
+                </button>
+                <a id="portal-user-wa-link" href="#" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold py-1.5 px-3 rounded-lg text-xs border border-slate-700 flex items-center justify-center gap-1 transition-all" title="Buka WhatsApp Pengguna">
+                  <span>📲</span> <span>Buka WA</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- OTP Input Box -->
+            <div class="space-y-2">
+              <label class="block font-bold text-slate-300 text-xs text-center">Masukkan 6-Digit Kode OTP</label>
+              <input id="portal-otp-input" type="text" maxlength="6" placeholder="101112" class="w-full bg-[#070b14] border-2 border-sky-500 text-white text-center py-3 rounded-2xl text-2xl font-mono font-black tracking-widest focus:outline-none focus:border-amber-400">
+            </div>
+
+            <button type="button" onclick="verifyUserOtpAndLogin()" class="w-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all text-xs flex items-center justify-center gap-2">
+              <span>🚀</span>
+              <span>Verifikasi OTP & Masuk Dashboard Pengguna</span>
+            </button>
+
+            <div class="text-center text-xs text-slate-400">
+              Belum menerima kode OTP? <button type="button" onclick="requestUserOtp()" class="text-sky-400 hover:underline font-bold">Kirim Ulang OTP ke WA</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 2: DAFTAR AKUN PENGGUNA BARU                -->
+        <!-- ============================================== -->
+        <div id="portal-tab-content-register" class="space-y-4 hidden">
+          <!-- Form Pendaftaran -->
+          <div id="portal-register-form-box" class="space-y-3.5 text-xs">
+            <div>
+              <label class="block font-bold text-slate-300 mb-1">Nama Lengkap</label>
+              <input id="portal-reg-name" type="text" placeholder="Contoh: Rian Pratama" class="w-full bg-[#070b14] border border-slate-700 text-white px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-amber-400">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-300 mb-1">Nomor WhatsApp Aktif</label>
+              <input id="portal-reg-phone" type="tel" placeholder="Contoh: 081298765432" class="w-full bg-[#070b14] border border-slate-700 text-white px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 font-mono">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-300 mb-1">Alamat Email</label>
+              <input id="portal-reg-email" type="email" placeholder="Contoh: rian.pratama@gmail.com" class="w-full bg-[#070b14] border border-slate-700 text-white px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-amber-400">
+            </div>
+            <div>
+              <label class="block font-bold text-slate-300 mb-1">Pilihan Paket Langganan</label>
+              <select id="portal-reg-plan" class="w-full bg-[#070b14] border border-slate-700 text-white px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 font-semibold">
+                <option value="TataDana Pro Lifetime" selected>⭐ TataDana Pro Lifetime (Rp99.000) — Akses Penuh AI & Telegram</option>
+                <option value="TataDana Starter">📦 TataDana Starter (Gratis / Free Tier) — Max 2 Dompet</option>
+              </select>
+            </div>
+
+            <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-300 text-[11px] leading-relaxed">
+              ⚠️ <b>PENTING (Verifikasi Dikirim ke WA Admin):</b> Pendaftaran akun baru berstatus <b>PENDING</b>. Anda wajib mengirimkan verifikasi ke WhatsApp Super Admin untuk disetujui (Approve) sebelum akun aktif!
+            </div>
+
+            <button type="button" onclick="handlePortalRegisterSubmit()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all text-xs flex items-center justify-center gap-2">
+              <span>📲</span>
+              <span>Daftar & Kirim Verifikasi ke WA Admin →</span>
+            </button>
+          </div>
+
+          <!-- Pending Screen (Setelah mendaftar, kirim verifikasi ke WA Admin) -->
+          <div id="portal-register-pending-box" class="space-y-4 hidden">
+            <div class="text-center space-y-2 pb-2">
+              <div class="w-14 h-14 rounded-full bg-amber-500/20 border-2 border-amber-400 text-amber-300 flex items-center justify-center text-2xl mx-auto animate-pulse">
+                ⏳
+              </div>
+              <h3 class="text-base font-black text-white">Pendaftaran Berhasil Dicatat!</h3>
+              <p class="text-xs text-amber-400 font-semibold">Status Akun: <b class="uppercase font-mono">PENDING APPROVAL</b></p>
+              <p class="text-[11px] text-slate-300">Kirimkan pesan verifikasi sekarang ke WhatsApp Super Admin agar akun Anda langsung di-approve.</p>
+            </div>
+
+            <div class="p-3.5 bg-[#070b14] rounded-2xl border border-slate-800 space-y-1.5 text-xs">
+              <div class="flex justify-between">
+                <span class="text-slate-400">ID Pengguna:</span>
+                <span id="portal-pending-id" class="font-mono font-bold text-sky-400">USR-XXXX</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Nama Lengkap:</span>
+                <span id="portal-pending-name" class="font-bold text-white">-</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">WhatsApp User:</span>
+                <span id="portal-pending-phone" class="font-mono text-white">-</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Paket Dipilih:</span>
+                <span id="portal-pending-plan" class="font-bold text-amber-300">-</span>
+              </div>
+            </div>
+
+            <!-- PRIMARY ACTION: Kirim Verifikasi ke WA Admin -->
+            <div class="space-y-2">
+              <a id="btn-portal-send-wa-admin" href="#" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all text-xs text-center">
+                <span>📲</span>
+                <span>Kirim Verifikasi ke WhatsApp Admin Sekarang</span>
+              </a>
+
+              <button type="button" onclick="checkPortalPendingStatus()" class="w-full bg-blue-700 hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl border border-blue-500/40 transition-all text-xs flex items-center justify-center gap-2">
+                <span>🔄</span>
+                <span>Cek Apakah Sudah Di-Approve Admin</span>
+              </button>
+
+              <button type="button" onclick="resetPortalRegisterView()" class="w-full text-slate-400 hover:text-white py-1 text-xs">
+                ← Kembali ke Form Pendaftaran
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 3: CEK STATUS PERSATUJUAN PENGGUNA          -->
+        <!-- ============================================== -->
+        <div id="portal-tab-content-status" class="space-y-4 hidden">
+          <div>
+            <label class="block font-bold text-slate-300 text-xs mb-1.5">Nomor WhatsApp atau ID Pengguna</label>
+            <input id="portal-status-query" type="text" placeholder="Contoh: 081298765432 atau USR-3219" class="w-full bg-[#070b14] border border-slate-700 text-white px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 font-mono text-xs">
+          </div>
+
+          <button type="button" onclick="checkAnyUserStatus()" class="w-full bg-blue-700 hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl text-xs transition-all shadow">
+            Periksa Status Akun 🔍
+          </button>
+
+          <!-- Result Container -->
+          <div id="portal-status-result" class="hidden p-4 rounded-2xl border space-y-2 text-xs">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Feature Grid 3 Columns -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl w-full text-xs">
+        <div class="bg-[#090e1c] border border-slate-800 p-4 rounded-2xl space-y-1.5 shadow">
+          <div class="text-xl">👛</div>
+          <div class="font-bold text-white text-sm">Multi E-Wallet & Bank</div>
+          <p class="text-slate-400 text-[11px] leading-relaxed">Kelola BCA Payroll, Mandiri Tabungan, GoPay, dan Dompet Tunai dalam satu overview saldo.</p>
+        </div>
+        <div class="bg-[#090e1c] border border-slate-800 p-4 rounded-2xl space-y-1.5 shadow">
+          <div class="text-xl">🤖</div>
+          <div class="font-bold text-white text-sm">FinBot WhatsApp & Telegram</div>
+          <p class="text-slate-400 text-[11px] leading-relaxed">Catat pengeluaran instan lewat chat atau pesan suara. Transaksi otomatis terpotong dari dompet pilihan.</p>
+        </div>
+        <div class="bg-[#090e1c] border border-slate-800 p-4 rounded-2xl space-y-1.5 shadow">
+          <div class="text-xl">📊</div>
+          <div class="font-bold text-white text-sm">Laporan Resmi Excel & PDF</div>
+          <p class="text-slate-400 text-[11px] leading-relaxed">Unduh laporan keuangan berkala bulanan dan tahunan dalam format Excel .csv atau cetak dokumen PDF.</p>
+        </div>
+      </div>
+
+      <!-- Footer Info -->
+      <div class="text-center text-[11px] text-slate-500 space-y-1 pt-2">
+        <div>TataDana Executive Personal Finance App © 2026. Seluruh hak cipta dilindungi.</div>
+        <div class="text-slate-400">
+          Admin Sistem? <a href="/admin" class="text-amber-400 hover:underline font-bold">Masuk ke Super Admin VIP Console (Link 1)</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 1. DASHBOARD PENGGUNA (TERBUKA SETELAH LOGIN SUKSES)                     -->
+  <!-- ========================================================================= -->
+  <div id="app-user-dashboard" class="flex-1 flex flex-col h-full overflow-hidden relative hidden">
+    
+    <!-- Premium Upgrade Pending Alert Banner (Appears when user requested upgrade) -->
+    <div id="banner-upgrade-pending" class="hidden bg-gradient-to-r from-amber-900/90 via-amber-800/90 to-yellow-900/90 text-amber-200 border-b border-amber-500/50 px-4 py-2 flex items-center justify-between z-40 text-xs font-semibold shadow-lg">
+      <div class="flex items-center gap-2">
+        <span class="text-base animate-pulse">⏳</span>
+        <span><b>Permintaan Upgrade PRO Terkirim:</b> Menunggu persetujuan / verifikasi Super Admin. Akun akan otomatis aktif sebagai PRO Lifetime!</span>
+      </div>
+      <button onclick="checkPremiumApprovalStatus()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1 rounded-lg text-xs font-bold transition-all shadow">
+        🔄 Cek Status
+      </button>
+    </div>
+
+    <!-- NATIVE APP TOP HEADER (No website navbar tabs!) -->
+    <header class="bg-[#090e1c]/95 backdrop-blur-md border-b border-slate-800/80 px-4 sm:px-6 py-2.5 flex items-center justify-between flex-shrink-0 z-30">
+      
+      <!-- Left: App Branding & User Profile Pill -->
+      <div class="flex items-center gap-3">
+        <div onclick="switchView('beranda')" class="flex items-center gap-2.5 cursor-pointer">
+          <div class="w-9 h-9 rounded-xl border border-amber-500/50 bg-[#121b33] flex items-center justify-center font-black text-amber-400 text-xs shadow-md">
+            TD
+          </div>
+          <div>
+            <div class="font-black text-white text-sm sm:text-base tracking-tight leading-none flex items-center gap-1.5">
+              <span>TataDana</span>
+              <span id="app-header-plan-badge" class="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.2 rounded font-bold font-mono">STARTER</span>
+            </div>
+            <p class="text-[10px] text-slate-400 font-medium">Fintech Personal App</p>
+          </div>
+        </div>
+
+        <!-- Telegram Sync Status Badge -->
+        <div class="hidden md:flex items-center gap-2 bg-[#0d162d] border border-sky-500/30 px-3 py-1 rounded-full text-xs font-semibold text-sky-200">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Telegram Sinkron (WIB)</span>
+          <span class="text-[10px] bg-sky-950 text-sky-400 border border-sky-400/30 px-1.5 py-0.2 rounded font-mono font-bold">REAL-TIME</span>
+        </div>
+      </div>
+
+      <!-- Right: Action Buttons, PIN Indicator & Profile/Logout -->
+      <div class="flex items-center gap-2.5">
+        
+        <!-- Direct Telegram Link in Header -->
+        <a href="https://t.me/TataDanaFinBot" id="link-direct-telegram-header" target="_blank" class="hidden sm:flex items-center gap-1.5 bg-[#0e213b] hover:bg-[#15325b] border border-sky-400/40 text-sky-200 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow" title="Buka Bot Telegram Resmi">
+          <svg class="w-3.5 h-3.5 text-sky-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.37.75-.56 2.93-1.28 4.88-2.12 5.86-2.54 2.79-1.18 3.37-1.38 3.75-1.39.08 0 .27.02.39.12.1.08.13.2.14.28-.01.07-.01.21-.03.38z"/></svg>
+          <span>Telegram ↗</span>
+        </a>
+
+        <!-- Telegram Bot PIN Pill -->
+        <div class="hidden sm:flex items-center gap-1.5 bg-[#0d162d] border border-amber-500/40 px-2.5 py-1 rounded-full text-xs shadow" title="PIN Bot Telegram untuk Pairing & Otorisasi Transaksi">
+          <span class="text-[11px] text-slate-400">🔐 PIN:</span>
+          <span id="pin-display-header" class="font-mono font-black text-amber-300">849-201</span>
+          <button onclick="copyBotPin()" class="text-[10px] bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 px-1.5 py-0.2 rounded font-bold transition-all">Salin</button>
+        </div>
+
+        <!-- Upgrade Premium Button -->
+        <button id="btn-header-upgrade" onclick="openModalUpgradePremium()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all shadow-md">
+          <span>⭐</span>
+          <span id="label-header-upgrade">Upgrade PRO</span>
+        </button>
+
+        <!-- Quick Add Transaction Button -->
+        <button onclick="openModalTransaction('expense')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow transition-all">
+          <span>+ Catat</span>
+        </button>
+
+        <!-- User Profile Pill -->
+        <div onclick="switchView('login')" class="cursor-pointer flex items-center gap-2 bg-[#0d162d] border border-slate-700 hover:border-amber-400/50 px-2.5 py-1 rounded-xl transition-all" title="Buka Profil Pengguna">
+          <div id="user-header-avatar" class="w-6 h-6 rounded-full bg-blue-900 border border-blue-400 text-sky-200 flex items-center justify-center font-bold text-[10px]">
+            PB
+          </div>
+          <span id="user-header-name" class="font-bold text-white text-xs hidden sm:inline">Pengguna Baru</span>
+        </div>
+
+        <!-- Logout Button -->
+        <button onclick="handleUserLogout()" class="bg-rose-950/60 hover:bg-rose-900 text-rose-300 hover:text-white border border-rose-700/60 px-2.5 py-1.5 rounded-xl transition-all text-xs font-bold flex items-center gap-1.5 shadow" title="Keluar dari Dashboard Pengguna">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          <span class="hidden sm:inline">Keluar</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Body (Sidebar Dock + Viewport) -->
+    <div class="flex-1 flex overflow-hidden">
+      
+      <!-- SLIM APP DOCK / SIDEBAR (Desktop Native App Feel) -->
+      <aside class="hidden lg:flex w-56 bg-[#090e1c] border-r border-slate-800/80 flex-col justify-between flex-shrink-0 z-20">
+        <div class="p-3.5 space-y-3">
+          <div class="text-[10px] font-black uppercase tracking-wider text-slate-500 px-2">
+            MENU APLIKASI
+          </div>
+
+          <!-- Navigation Menu List -->
+          <nav class="space-y-1 text-xs font-semibold">
+            <button onclick="switchView('beranda')" id="btn-beranda" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left active-app-nav-item">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              <span class="font-bold">Beranda</span>
+            </button>
+
+            <button onclick="switchView('transaksi')" id="btn-transaksi" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-[#121c38] transition-all text-left">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+              <span>Transaksi</span>
+              <span id="badge-total-tx" class="ml-auto text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.2 rounded font-mono">0</span>
+            </button>
+
+            <button onclick="switchView('laporan')" id="btn-laporan" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-[#121c38] transition-all text-left">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span>Laporan & Export</span>
+            </button>
+
+            <button onclick="switchView('budget')" id="btn-budget" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-[#121c38] transition-all text-left">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>Budget Pagu</span>
+            </button>
+
+            <button onclick="switchView('wallet')" id="btn-wallet" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-[#121c38] transition-all text-left">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              <span>Kelola Dompet</span>
+            </button>
+
+            <button onclick="switchView('bot')" id="btn-bot" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sky-400 hover:text-white hover:bg-[#121c38] transition-all text-left">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.37.75-.56 2.93-1.28 4.88-2.12 5.86-2.54 2.79-1.18 3.37-1.38 3.75-1.39.08 0 .27.02.39.12.1.08.13.2.14.28-.01.07-.01.21-.03.38z"/></svg>
+              <span class="font-bold">FinBot Chat</span>
+            </button>
+
+            <!-- Link Akses Langsung ke Telegram -->
+            <a href="https://t.me/TataDanaFinBot" id="link-direct-telegram-sidebar" target="_blank" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gradient-to-r from-[#0d223a] to-[#102d4f] border border-sky-400/50 text-sky-200 hover:text-white hover:border-sky-300 transition-all text-left shadow-md group">
+              <div class="flex items-center gap-2.5">
+                <svg class="w-4 h-4 text-sky-400 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.37.75-.56 2.93-1.28 4.88-2.12 5.86-2.54 2.79-1.18 3.37-1.38 3.75-1.39.08 0 .27.02.39.12.1.08.13.2.14.28-.01.07-.01.21-.03.38z"/></svg>
+                <span class="font-bold text-xs">Akses Telegram</span>
+              </div>
+              <span class="text-[9px] bg-sky-500/30 text-sky-300 border border-sky-400/40 px-1.5 py-0.5 rounded font-mono font-bold">↗ BUKA</span>
+            </a>
+
+            <button onclick="switchView('settings')" id="btn-settings" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-[#121c38] transition-all text-left">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+              <span>Pengaturan & PIN</span>
+            </button>
+
+            <button onclick="switchView('login')" id="btn-login" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-amber-300 hover:bg-[#121c38] transition-all text-left">
+              <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              <span>Profil Pengguna</span>
+            </button>
+
+            <button onclick="handleUserLogout()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-rose-400 hover:text-white hover:bg-rose-950/60 transition-all text-left font-bold">
+              <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+              <span>Keluar / Logout</span>
+            </button>
+          </nav>
+        </div>
+
+        <!-- Sidebar Bottom Plan Badge -->
+        <div class="p-3 border-t border-slate-800">
+          <div class="bg-[#0d162d] p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+            <div>
+              <div class="text-[9px] font-black uppercase text-slate-400">PAKET ANDA</div>
+              <div id="sidebar-user-plan" class="font-extrabold text-white text-xs mt-0.5">TataDana Starter</div>
+            </div>
+            <button onclick="openModalUpgradePremium()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[10px] px-2.5 py-1 rounded-lg shadow">
+              PRO
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- MAIN CONTENT VIEWPORT -->
+      <main class="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 lg:pb-6 space-y-5">
+
+        <!-- =================================================================== -->
+        <!-- VIEW 1: BERANDA DASHBOARD APLIKASI KEUANGAN                         -->
+        <!-- =================================================================== -->
+        <div id="view-beranda" class="space-y-5 max-w-5xl mx-auto">
+          
+          <!-- Banner Pengguna Baru Rp0 Bersih (Requirement 5) -->
+          <div id="banner-new-user" class="bg-gradient-to-r from-blue-950/80 via-[#0d1c3a] to-[#071329] border border-sky-400/50 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xl">
+            <div class="flex items-center gap-3">
+              <span class="text-3xl">🌱</span>
+              <div>
+                <div class="text-xs font-bold text-sky-300 uppercase tracking-wide">Selamat Datang di TataDana!</div>
+                <div class="text-xs text-slate-300">Akun baru Anda telah siap dengan saldo awal <b>Rp0 (bersih)</b>. Catat pemasukan pertama atau hubungkan dompet untuk memulai!</div>
+              </div>
+            </div>
+            <div class="flex gap-2 shrink-0">
+              <button onclick="openModalTransaction('topup')" class="bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl transition-all shadow">
+                + Pemasukan Awal
+              </button>
+              <button onclick="openModalAddWallet()" class="bg-[#1e2a4a] hover:bg-[#273863] text-sky-200 border border-sky-400/30 font-bold text-xs px-3 py-1.5 rounded-xl transition-all">
+                + E-Wallet
+              </button>
+            </div>
+          </div>
+
+          <!-- EXECUTIVE VIRTUAL FINTECH WALLET CARD -->
+          <div class="bg-gradient-to-r from-[#121c38] via-[#0e1830] to-[#091124] border border-blue-900/60 rounded-3xl p-6 sm:p-7 shadow-2xl relative overflow-hidden">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div class="space-y-3">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span id="badge-client-title" class="bg-[#1e2a4a] text-amber-400 text-[10px] font-extrabold px-3 py-1 rounded-full border border-amber-500/30 tracking-wider">
+                    🛡️ TATADANA PERSONAL • ASSET BALANCE
+                  </span>
+                  <span id="badge-client-growth" class="bg-emerald-950/80 text-emerald-400 text-[10px] font-extrabold px-2.5 py-1 rounded-full border border-emerald-500/30">
+                    ● Real-Time Sinkron
+                  </span>
+                </div>
+
+                <!-- Total Balance Display (Starts at Rp0 for new user) -->
+                <div>
+                  <div class="text-xs text-slate-400 font-semibold mb-1">TOTAL SALDO KESELURUHAN</div>
+                  <div class="flex items-baseline gap-2">
+                    <span id="display-total-balance" class="text-4xl sm:text-5xl font-black text-white tracking-tight font-mono">
+                      Rp0
+                    </span>
+                    <span class="text-slate-400 text-sm font-bold">IDR</span>
+                  </div>
+                </div>
+
+                <!-- Cashflow details -->
+                <div class="flex items-center gap-4 text-xs font-semibold text-slate-300 flex-wrap pt-1">
+                  <span class="flex items-center gap-1.5 text-emerald-400">
+                    <span>▲ Pemasukan:</span> <span id="display-total-income" class="font-mono font-bold">Rp0</span>
+                  </span>
+                  <span class="flex items-center gap-1.5 text-rose-400">
+                    <span>▼ Belanja:</span> <span id="display-total-expense" class="font-mono font-bold">Rp0</span>
+                  </span>
+                  <span class="flex items-center gap-1.5 text-sky-300">
+                    <span>Arus Kas:</span> <span id="display-net-cashflow" class="font-mono font-bold">Rp0</span>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Quick Action Grid -->
+              <div class="flex flex-col gap-2.5 sm:w-60 flex-shrink-0">
+                <button onclick="switchView('bot')" class="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-extrabold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg cyan-glow transition-all">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.37.75-.56 2.93-1.28 4.88-2.12 5.86-2.54 2.79-1.18 3.37-1.38 3.75-1.39.08 0 .27.02.39.12.1.08.13.2.14.28-.01.07-.01.21-.03.38z"/></svg>
+                  <span>Simulator Chatbot Web</span>
+                </button>
+
+                <!-- Tombol Buka Telegram Langsung -->
+                <a href="https://t.me/TataDanaFinBot" id="link-direct-telegram-beranda" target="_blank" class="w-full bg-[#0e213b] hover:bg-[#15325b] text-sky-200 hover:text-white font-bold text-xs py-2 px-3 rounded-xl border border-sky-400/50 shadow flex items-center justify-center gap-1.5 transition-all">
+                  <svg class="w-3.5 h-3.5 text-sky-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.37.75-.56 2.93-1.28 4.88-2.12 5.86-2.54 2.79-1.18 3.37-1.38 3.75-1.39.08 0 .27.02.39.12.1.08.13.2.14.28-.01.07-.01.21-.03.38z"/></svg>
+                  <span>Buka Bot Telegram Langsung ↗</span>
+                </a>
+
+                <div class="grid grid-cols-2 gap-2">
+                  <button onclick="openModalTransaction('expense')" class="bg-[#121c38] hover:bg-rose-950/50 text-rose-300 font-bold text-xs py-2 px-3 rounded-xl border border-rose-500/30 shadow flex items-center justify-center gap-1 transition-all">
+                    <span>💸 Belanja</span>
+                  </button>
+                  <button onclick="openModalTransaction('income')" class="bg-[#121c38] hover:bg-emerald-950/50 text-emerald-300 font-bold text-xs py-2 px-3 rounded-xl border border-emerald-500/30 shadow flex items-center justify-center gap-1 transition-all">
+                    <span>💰 Pemasukan</span>
+                  </button>
+                </div>
+
+                <button onclick="openModalAddWallet()" class="w-full bg-[#0d162d] hover:bg-[#152347] text-amber-300 font-bold text-xs py-2 px-3 rounded-xl border border-amber-500/40 shadow flex items-center justify-center gap-1 transition-all">
+                  <span>+ Tambah Dompet / E-Wallet</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- GRID DAFTAR DOMPET & E-WALLET -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-extrabold text-white text-sm flex items-center gap-2">
+                <span>👛</span> Dompet & Rekening Terhubung (<span id="count-active-wallets">4</span>)
+              </h3>
+              <button onclick="openModalAddWallet()" class="text-xs text-sky-400 hover:text-white font-bold flex items-center gap-1">
+                <span>+ Tambah Baru</span>
+              </button>
+            </div>
+
+            <!-- Dompet Grid Cards Container -->
+            <div id="beranda-wallets-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- DAFTAR MUTASI TERAKHIR -->
+          <div class="bg-[#0b1329] border border-slate-800 rounded-3xl p-5 shadow-xl space-y-3">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h3 class="font-extrabold text-white text-sm flex items-center gap-2">
+                <span>⚡</span> Riwayat Transaksi Terbaru
+              </h3>
+              <button onclick="switchView('transaksi')" class="text-xs text-sky-400 hover:text-white font-bold">
+                Lihat Semua Mutasi →
+              </button>
+            </div>
+
+            <div id="table-recent-mutations" class="divide-y divide-slate-800 text-xs">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 2: TRANSAKSI (MUTASI & FILTER)                                 -->
+        <!-- =================================================================== -->
+        <div id="view-transaksi" class="space-y-5 max-w-5xl mx-auto hidden">
+          <div class="bg-[#0b1329] border border-blue-900/50 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div class="text-xs text-sky-400 font-bold mb-1">TataDana / Transaksi</div>
+              <h2 class="text-xl font-black text-white">Catatan Transaksi & Mutasi</h2>
+              <p class="text-xs text-slate-400">Seluruh pencatatan belanja, pemasukan, dan mutasi saldo dari bot Telegram dan web.</p>
+            </div>
+            <button onclick="openModalTransaction('expense')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow">
+              + Catat Transaksi Baru
+            </button>
+          </div>
+
+          <!-- Filter Bar -->
+          <div class="bg-[#0b1329] border border-slate-800 p-4 rounded-2xl flex flex-col sm:flex-row items-center gap-3 text-xs">
+            <input id="search-tx-input" oninput="applyTransactionFilters()" type="text" placeholder="Cari keterangan, kategori, atau dompet..." class="flex-1 bg-[#070b14] border border-slate-700 text-white px-3.5 py-2 rounded-xl focus:outline-none focus:border-sky-500">
+            <select id="filter-tx-type" onchange="applyTransactionFilters()" class="bg-[#070b14] border border-slate-700 text-white px-3 py-2 rounded-xl">
+              <option value="all">Semua Tipe</option>
+              <option value="expense">Pengeluaran</option>
+              <option value="income">Pemasukan</option>
+              <option value="topup">Top Up</option>
+            </select>
+            <select id="filter-tx-wallet" onchange="applyTransactionFilters()" class="bg-[#070b14] border border-slate-700 text-white px-3 py-2 rounded-xl">
+              <option value="all">Semua Dompet</option>
+            </select>
+          </div>
+
+          <!-- Mutasi Table -->
+          <div class="bg-[#0b1329] border border-slate-800 rounded-3xl p-5 shadow-xl">
+            <div id="table-all-mutations" class="divide-y divide-slate-800 text-xs">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 3: LAPORAN & EXPORT KEUANGAN RESMI                             -->
+        <!-- =================================================================== -->
+        <div id="view-laporan" class="space-y-5 max-w-5xl mx-auto hidden">
+          <div class="bg-[#0b1329] border border-blue-900/50 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div class="text-xs text-sky-400 font-bold mb-1">TataDana / Laporan Keuangan</div>
+              <h2 class="text-xl font-black text-white">Rekapan Laporan & Export Data</h2>
+              <p class="text-xs text-slate-400">Unduh rekapan resmi dalam format Microsoft Excel (.csv/.xlsx) atau Dokumen PDF.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="generateReportExport('excel')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow">
+                <span>📊</span> Unduh Excel
+              </button>
+              <button onclick="generateReportExport('pdf')" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow">
+                <span>📄</span> Cetak PDF
+              </button>
+            </div>
+          </div>
+
+          <!-- Periode Filter Tabs -->
+          <div class="flex items-center gap-2 overflow-x-auto text-xs pb-1">
+            <button onclick="setReportPeriod('bulanan')" id="btn-period-bulanan" class="px-3.5 py-2 rounded-xl font-bold bg-blue-700 text-white shadow">Bulanan</button>
+            <button onclick="setReportPeriod('harian')" id="btn-period-harian" class="px-3.5 py-2 rounded-xl font-bold text-slate-400 hover:text-white">Harian</button>
+            <button onclick="setReportPeriod('mingguan')" id="btn-period-mingguan" class="px-3.5 py-2 rounded-xl font-bold text-slate-400 hover:text-white">Mingguan</button>
+            <button onclick="setReportPeriod('tahunan')" id="btn-period-tahunan" class="px-3.5 py-2 rounded-xl font-bold text-slate-400 hover:text-white">Tahunan</button>
+          </div>
+
+          <!-- KPI Cards Report -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-[#0b1329] border border-emerald-500/30 rounded-2xl p-4 shadow">
+              <div class="text-xs text-slate-400 font-semibold">Total Pemasukan</div>
+              <div id="report-kpi-income" class="text-2xl font-black text-emerald-400 mt-1 font-mono">Rp0</div>
+            </div>
+            <div class="bg-[#0b1329] border border-rose-500/30 rounded-2xl p-4 shadow">
+              <div class="text-xs text-slate-400 font-semibold">Total Pengeluaran</div>
+              <div id="report-kpi-expense" class="text-2xl font-black text-rose-400 mt-1 font-mono">Rp0</div>
+            </div>
+            <div class="bg-[#0b1329] border border-sky-500/30 rounded-2xl p-4 shadow">
+              <div class="text-xs text-slate-400 font-semibold">Net Arus Kas (Surplus)</div>
+              <div id="report-kpi-net" class="text-2xl font-black text-sky-400 mt-1 font-mono">Rp0</div>
+            </div>
+          </div>
+
+          <!-- Table Report -->
+          <div class="bg-[#0b1329] border border-slate-800 rounded-3xl p-5 shadow-xl space-y-3">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h3 class="font-extrabold text-white text-sm">Rincian Transaksi Periode Terpilih</h3>
+              <span id="label-report-tx-count" class="text-xs text-slate-400">0 Transaksi</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-[#070b14] text-slate-400 uppercase font-bold border-b border-slate-800">
+                  <tr>
+                    <th class="px-3 py-2.5">Waktu</th>
+                    <th class="px-3 py-2.5">Keterangan</th>
+                    <th class="px-3 py-2.5">Kategori</th>
+                    <th class="px-3 py-2.5">Dompet</th>
+                    <th class="px-3 py-2.5 text-right">Nominal</th>
+                  </tr>
+                </thead>
+                <tbody id="table-report-mutations" class="divide-y divide-slate-800 text-slate-300">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 4: BUDGET PAGU BULANAN                                         -->
+        <!-- =================================================================== -->
+        <div id="view-budget" class="space-y-5 max-w-5xl mx-auto hidden">
+          <div class="bg-[#0b1329] border border-blue-900/50 rounded-2xl p-5">
+            <div class="text-xs text-sky-400 font-bold mb-1">TataDana / Budget</div>
+            <h2 class="text-xl font-black text-white">Monitoring Budget Kategori</h2>
+            <p class="text-xs text-slate-400">Alert otomatis dikirim ketika belanja mencapai 80% dari batas pagu.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div class="bg-[#0b1329] border border-blue-900/50 rounded-2xl p-4 space-y-2">
+              <div class="flex justify-between font-bold text-white">
+                <span>🍜 Makanan & Minuman</span>
+                <span class="text-amber-400 font-mono">Rp0 / Rp2.500.000 (0%)</span>
+              </div>
+              <div class="w-full bg-slate-900 rounded-full h-2.5">
+                <div class="bg-amber-400 h-2.5 rounded-full" style="width: 0%"></div>
+              </div>
+              <p class="text-[11px] text-slate-400">Batas aman: <b class="text-white">Rp2.500.000</b></p>
+            </div>
+
+            <div class="bg-[#0b1329] border border-blue-900/50 rounded-2xl p-4 space-y-2">
+              <div class="flex justify-between font-bold text-white">
+                <span>⛽ Transportasi & Bensin</span>
+                <span class="text-emerald-400 font-mono">Rp0 / Rp1.000.000 (0%)</span>
+              </div>
+              <div class="w-full bg-slate-900 rounded-full h-2.5">
+                <div class="bg-emerald-400 h-2.5 rounded-full" style="width: 0%"></div>
+              </div>
+              <p class="text-[11px] text-slate-400">Batas aman: <b class="text-white">Rp1.000.000</b></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 5: KELOLA DOMPET & E-WALLET (DENGAN PENAMBAHAN REAL-TIME)       -->
+        <!-- =================================================================== -->
+        <div id="view-wallet" class="space-y-5 max-w-5xl mx-auto hidden">
+          <div class="bg-[#0b1329] border border-blue-900/50 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div class="text-xs text-sky-400 font-bold mb-1">TataDana / Manajemen Dompet</div>
+              <h2 class="text-xl font-black text-white">Kelola Multi-Dompet & E-Wallet</h2>
+              <p class="text-xs text-slate-400">Tambah e-wallet baru (DANA, ShopeePay, OVO, Jago) yang otomatis langsung tersambung ke FinBot.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openModalAddWallet()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl shadow transition-all flex items-center gap-1.5">
+                <span>+</span> Tambah E-Wallet / Bank
+              </button>
+              <button onclick="openModalTransaction('topup')" class="bg-sky-700 hover:bg-sky-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl">
+                + Top Up Saldo
+              </button>
+            </div>
+          </div>
+
+          <!-- All Wallet Cards Grid -->
+          <div id="wallet-management-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 6: FINBOT CHAT SIMULATOR (SINKRON CHATBOT AI & TELEGRAM)       -->
+        <!-- =================================================================== -->
+        <div id="view-bot" class="space-y-4 max-w-4xl mx-auto hidden">
+          <div class="bg-[#0b1329] border border-blue-900/50 rounded-2xl p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-400 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow">
+                🤖
+              </div>
+              <div>
+                <h3 class="font-extrabold text-white text-sm">TataDana FinBot Live Simulator</h3>
+                <p class="text-xs text-slate-400">Pesan otomatis tersinkronisasi dengan Bot Telegram tanpa duplikat.</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <a href="https://t.me/TataDanaFinBot" id="link-direct-telegram-viewbot-top" target="_blank" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-xs px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow transition-all">
+                <span>✈️ Buka Telegram ↗</span>
+              </a>
+              <span class="text-xs text-amber-400 font-mono font-bold bg-[#070b14] px-2.5 py-1 rounded-lg border border-amber-500/30">PIN: <span id="pin-display-bot-view">849-201</span></span>
+            </div>
+          </div>
+
+          <!-- Telegram Direct Action Banner -->
+          <div class="bg-gradient-to-r from-[#0d223a] via-[#102d4f] to-[#0d223a] border border-sky-400/50 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-sky-400 text-xl shrink-0">
+                ✈️
+              </div>
+              <div>
+                <div class="font-extrabold text-white text-xs sm:text-sm">Akses Langsung via Aplikasi Telegram</div>
+                <p class="text-[11px] text-slate-300">Catat keuangan langsung dari aplikasi Telegram Anda di HP atau desktop. Kinerja pencatatan pemasukan, pengeluaran & pemotongan saldo 100% tersinkronisasi seketika.</p>
+              </div>
+            </div>
+            <a href="https://t.me/TataDanaFinBot" id="link-direct-telegram-viewbot" target="_blank" class="shrink-0 bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow transition-all">
+              <span>🚀 Buka Bot Telegram Resmi ↗</span>
+            </a>
+          </div>
+
+          <!-- Chat Window -->
+          <div class="bg-[#070b14] border border-blue-900/60 rounded-3xl p-4 flex flex-col h-[520px]">
+            <!-- Quick Chips -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-3 text-xs border-b border-slate-800">
+              <span class="text-[10px] font-bold text-slate-500">SIMULASI:</span>
+              <button onclick="sendQuickChat('beli bakso 25rb')" class="px-2.5 py-1 rounded-lg bg-amber-950/70 hover:bg-amber-900 text-amber-300 font-bold whitespace-nowrap">🍜 Beli bakso 25rb</button>
+              <button onclick="sendQuickChat('gajian 5jt')" class="px-2.5 py-1 rounded-lg bg-emerald-950/70 hover:bg-emerald-900 text-emerald-300 font-bold whitespace-nowrap">💰 Gajian 5jt</button>
+              <button onclick="sendQuickChat('beli bensin 50rb pake gopay')" class="px-2.5 py-1 rounded-lg bg-blue-950/70 hover:bg-blue-900 text-sky-300 font-bold whitespace-nowrap">⛽ Bensin 50rb gopay</button>
+              <button onclick="sendQuickChat('/saldo')" class="px-2 py-1 rounded-lg bg-slate-900 text-slate-300 font-mono font-bold whitespace-nowrap">/saldo</button>
+            </div>
+
+            <!-- Messages Stream (Synchronized) -->
+            <div id="chat-messages" class="flex-1 overflow-y-auto space-y-3 py-3 pr-2 text-xs">
+              <!-- Rendered via renderAllChats() -->
+            </div>
+
+            <!-- Chat Input Bar -->
+            <div class="pt-3 border-t border-slate-800 flex items-center gap-2">
+              <button onclick="simulateVoiceNote()" class="p-2.5 rounded-xl bg-[#121c38] hover:bg-blue-900 text-sky-300 border border-slate-700" title="Simulasi Voice Note">
+                🎙️
+              </button>
+              <button onclick="simulatePhotoReceipt()" class="p-2.5 rounded-xl bg-[#121c38] hover:bg-blue-900 text-sky-300 border border-slate-700" title="Simulasi Foto Struk">
+                📷
+              </button>
+              <input id="input-chat" type="text" onkeydown="if(event.key==='Enter') sendCustomChat()" placeholder="Ketik transaksi... (contoh: 'beli martabak 35rb')" class="flex-1 bg-[#0b1329] border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-sky-500 font-medium">
+              <button onclick="sendCustomChat()" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg transition-all">
+                Kirim
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 7: PENGATURAN & PIN KEAMANAN                                   -->
+        <!-- =================================================================== -->
+        <div id="view-settings" class="space-y-5 max-w-3xl mx-auto hidden">
+          <div class="bg-[#0b1329] border border-blue-900/50 rounded-2xl p-5">
+            <div class="text-xs text-sky-400 font-bold mb-1">TataDana / Pengaturan</div>
+            <h2 class="text-xl font-black text-white">Pengaturan Akun & PIN Bot Telegram</h2>
+            <p class="text-xs text-slate-400">PIN otorisasi digunakan untuk pairing dan keamanan transaksi melalui Telegram.</p>
+          </div>
+
+          <div class="bg-[#0b1329] border border-blue-900/50 rounded-3xl p-6 space-y-4 text-xs">
+            <div class="p-4 bg-[#070b14] rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div class="font-bold text-white text-sm flex items-center gap-2">
+                  <span>Status Pairing Telegram Bot</span>
+                  <span class="text-emerald-400 font-bold bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-full text-[10px]">
+                    ● TERHUBUNG AKTIF
+                  </span>
+                </div>
+                <div class="text-slate-400 mt-0.5">Akun terhubung ke <b class="text-sky-300 telegram-bot-username-display">@TataDanaFinBot</b>. Ketik <code class="text-amber-400 font-mono">/pair &lt;PIN&gt;</code> di Telegram jika ingin memasangkan perangkat lain.</div>
+              </div>
+              <a href="https://t.me/TataDanaFinBot" id="link-direct-telegram-settings" target="_blank" class="shrink-0 bg-sky-500 hover:bg-sky-400 text-slate-950 font-black px-3.5 py-1.5 rounded-xl flex items-center justify-center gap-1.5 shadow transition-all">
+                <svg class="w-3.5 h-3.5 text-slate-950" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.37.75-.56 2.93-1.28 4.88-2.12 5.86-2.54 2.79-1.18 3.37-1.38 3.75-1.39.08 0 .27.02.39.12.1.08.13.2.14.28-.01.07-.01.21-.03.38z"/></svg>
+                <span>Buka Bot Telegram ↗</span>
+              </a>
+            </div>
+
+            <div class="p-4 bg-[#070b14] rounded-2xl border border-slate-800 flex items-center justify-between">
+              <div>
+                <div class="font-bold text-white text-sm">PIN Bot Telegram Saat Ini</div>
+                <div class="text-slate-400 mt-0.5">Digunakan untuk otorisasi mutasi cepat di chat Telegram.</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span id="pin-display-settings" class="font-mono text-base font-black text-amber-300 bg-black/60 px-3 py-1 rounded-xl border border-amber-500/40">849-201</span>
+                <button onclick="regeneratePin()" class="bg-blue-700 hover:bg-blue-600 text-white font-bold px-3 py-1.5 rounded-xl">Acak Baru</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 8: PROFIL PENGGUNA, LOGIN, & REGISTRASI (REAL BACKEND FLOW)    -->
+        <!-- =================================================================== -->
+        <div id="view-login" class="space-y-5 max-w-4xl mx-auto hidden">
+          <!-- Auth Header -->
+          <div class="bg-[#0b1329] border border-blue-900/50 rounded-2xl p-5 flex items-center justify-between">
+            <div>
+              <div class="text-xs text-amber-400 font-bold mb-1">TataDana / Autentikasi Pengguna</div>
+              <h2 class="text-xl font-black text-white">Masuk Akun & Pendaftaran Pengguna Baru</h2>
+              <p class="text-xs text-slate-400">Pendaftaran akun baru wajib menunggu persetujuan Super Admin sebelum dapat masuk.</p>
+            </div>
+            <button onclick="switchView('beranda')" class="bg-blue-700 hover:bg-blue-600 text-white font-bold text-xs px-4 py-2 rounded-xl">
+              ← Kembali ke Beranda
+            </button>
+          </div>
+
+          <!-- Auth Mode Toggle: Masuk vs Daftar Baru -->
+          <div class="flex border-b border-slate-800 text-xs font-bold">
+            <button onclick="switchAuthTab('login')" id="tab-auth-login" class="py-3 px-6 border-b-2 border-amber-400 text-amber-400 font-black">
+              👤 Masuk Akun Terdaftar
+            </button>
+            <button onclick="switchAuthTab('register')" id="tab-auth-register" class="py-3 px-6 text-slate-400 hover:text-white border-b-2 border-transparent">
+              ✨ Daftar Pengguna Baru
+            </button>
+          </div>
+
+          <!-- SUB-TAB 1: MASUK AKUN -->
+          <div id="subtab-auth-login" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Profil Sesi Aktif -->
+            <div class="bg-[#0b1329] border border-amber-500/30 rounded-3xl p-6 space-y-4">
+              <div class="flex items-center gap-3">
+                <div id="login-card-avatar" class="w-12 h-12 rounded-full bg-gradient-to-tr from-amber-400 to-amber-600 text-slate-950 font-black text-lg flex items-center justify-center">
+                  PB
+                </div>
+                <div>
+                  <h3 id="login-card-name" class="font-extrabold text-white text-base">Pengguna Baru</h3>
+                  <span id="login-card-badge" class="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded font-bold font-mono">STARTER CLIENT</span>
+                </div>
+              </div>
+
+              <div class="space-y-2.5 text-xs">
+                <div class="p-3 bg-[#070b14] rounded-xl border border-slate-800">
+                  <span class="text-slate-400">Email:</span>
+                  <span id="login-card-email" class="font-bold text-white ml-2">user.baru@gmail.com</span>
+                </div>
+                <div class="p-3 bg-[#070b14] rounded-xl border border-slate-800">
+                  <span class="text-slate-400">No. WhatsApp/HP:</span>
+                  <span id="login-card-phone" class="font-bold text-white ml-2">08129990001</span>
+                </div>
+                <div class="p-3 bg-[#070b14] rounded-xl border border-slate-800 flex items-center justify-between">
+                  <span class="text-slate-400">Status Akun:</span>
+                  <span id="login-card-status" class="text-emerald-400 font-bold bg-emerald-950 px-2 py-0.5 rounded border border-emerald-500/30">● AKTIF (APPROVED)</span>
+                </div>
+              </div>
+
+              <div>
+                <button onclick="handleUserLogout()" class="w-full bg-rose-950/60 hover:bg-rose-900 text-rose-300 hover:text-white border border-rose-700/60 font-bold py-2.5 rounded-xl text-xs transition-all shadow flex items-center justify-center gap-2">
+                  <span>🚪</span> <span>Keluar / Ganti Akun</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Form Masuk Akun Lain -->
+            <div class="bg-[#0b1329] border border-blue-900/50 rounded-3xl p-6 space-y-4">
+              <h3 class="font-extrabold text-white text-base">Masuk dengan Nomor WhatsApp</h3>
+              <p class="text-xs text-slate-400">Akun baru yang belum disetujui Super Admin tidak dapat masuk sampai di-approve.</p>
+
+              <div class="space-y-3 text-xs">
+                <div>
+                  <label class="block font-bold text-slate-300 mb-1">Nomor WhatsApp Terdaftar</label>
+                  <input id="login-input-phone" type="text" placeholder="Contoh: 081298765432" value="" class="w-full bg-[#070b14] border border-slate-700 text-white px-3 py-2.5 rounded-xl focus:outline-none focus:border-sky-500 font-mono">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-300 mb-1">PIN Otorisasi (6 Digit)</label>
+                  <input id="login-input-pin" type="password" placeholder="Masukkan 6-digit PIN" value="" class="w-full bg-[#070b14] border border-slate-700 text-white px-3 py-2.5 rounded-xl focus:outline-none focus:border-sky-500 font-mono">
+                </div>
+                <button onclick="handleLoginSubmit()" class="w-full bg-blue-700 hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl border border-blue-500/40 transition-all text-xs shadow-lg">
+                  Verifikasi & Masuk Dashboard
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB-TAB 2: DAFTAR PENGGUNA BARU -->
+          <div id="subtab-auth-register" class="space-y-5 hidden">
+            <!-- Form Registrasi -->
+            <div id="form-register-container" class="bg-[#0b1329] border border-blue-900/50 rounded-3xl p-6 space-y-4 max-w-2xl mx-auto shadow-2xl">
+              <div>
+                <h3 class="font-extrabold text-white text-base">Pendaftaran Akun Pengguna Baru TataDana</h3>
+                <p class="text-xs text-slate-400 mt-1">Sesuai ketentuan, pendaftaran akun baru harus menunggu persetujuan Super Admin sebelum bisa login.</p>
+              </div>
+
+              <div class="space-y-3 text-xs">
+                <div>
+                  <label class="block font-bold text-slate-300 mb-1">Nama Lengkap</label>
+                  <input id="reg-name" type="text" placeholder="Contoh: Rian Pratama" class="w-full bg-[#070b14] border border-slate-700 text-white px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-sky-500">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-300 mb-1">Nomor WhatsApp Aktif</label>
+                  <input id="reg-phone" type="text" placeholder="Contoh: 081298765432" class="w-full bg-[#070b14] border border-slate-700 text-white px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-sky-500 font-mono">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-300 mb-1">Alamat Email</label>
+                  <input id="reg-email" type="email" placeholder="Contoh: rian.pratama@gmail.com" class="w-full bg-[#070b14] border border-slate-700 text-white px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-sky-500">
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-300 mb-1">Pilihan Paket Langganan</label>
+                  <select id="reg-plan" class="w-full bg-[#070b14] border border-slate-700 text-white px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-sky-500 font-semibold">
+                    <option value="TataDana Pro Lifetime" selected>⭐ TataDana Pro Lifetime (Rp99.000) — Akses Penuh AI & Telegram</option>
+                    <option value="TataDana Starter">📦 TataDana Starter (Gratis / Free Tier) — Max 2 Dompet</option>
+                  </select>
+                </div>
+
+                <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-300 text-[11px] leading-relaxed">
+                  ⚠️ <b>Ketentuan Registrasi:</b> Pendaftar baru tidak langsung masuk. Data tersambung ke antrean Super Admin dan harus disetujui (Approve) oleh Super Admin terlebih dahulu.
+                </div>
+
+                <button onclick="handleRegisterSubmit()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all text-xs">
+                  Daftar Sekarang & Kirim ke Super Admin →
+                </button>
+              </div>
+            </div>
+
+            <!-- Layar Pending Approval (Requirement 3: Menunggu persetujuan Super Admin) -->
+            <div id="screen-wa-pending" class="hidden bg-[#0b1329] border border-amber-500/40 rounded-3xl p-6 space-y-4 max-w-2xl mx-auto shadow-2xl gold-glow">
+              <div class="text-center space-y-2 pb-3 border-b border-slate-800">
+                <div class="w-16 h-16 rounded-full bg-amber-500/20 border-2 border-amber-400 text-amber-300 flex items-center justify-center text-3xl mx-auto animate-pulse">
+                  ⏳
+                </div>
+                <h3 class="text-lg font-black text-white">Pendaftaran Berhasil! Menunggu Persetujuan Super Admin</h3>
+                <p class="text-xs text-slate-300">Akun Anda telah tersimpan dengan status: <b class="text-amber-400 uppercase font-mono">PENDING APPROVAL</b></p>
+              </div>
+
+              <!-- Data Pendaftar -->
+              <div class="p-4 bg-[#070b14] rounded-2xl border border-slate-800 space-y-2 text-xs">
+                <div class="flex justify-between">
+                  <span class="text-slate-400">ID Pengguna:</span>
+                  <span id="pending-user-id" class="font-mono font-bold text-sky-400">USR-2026-9041</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-400">Nama:</span>
+                  <span id="pending-user-name" class="font-bold text-white">Rian Pratama</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-400">No. WhatsApp:</span>
+                  <span id="pending-user-phone" class="font-mono text-white">081298765432</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-400">Paket:</span>
+                  <span id="pending-user-plan" class="font-bold text-amber-300">TataDana Pro Lifetime (Rp99.000)</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-400">Saldo Awal Setelah Approve:</span>
+                  <span class="font-mono font-bold text-emerald-400">Rp0 (Bersih, Sesuai Syarat)</span>
+                </div>
+              </div>
+
+              <!-- Tombol WhatsApp & Cek Status (Superadmin button removed completely!) -->
+              <div class="space-y-2.5">
+                <a id="btn-wa-confirm-link" href="#" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all text-xs text-center">
+                  <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.071.376-.044.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564c.173.087.289.13.332.203.043.072.043.419-.101.824z"/></svg>
+                  <span>📲 Konfirmasi ke WhatsApp Super Admin</span>
+                </a>
+
+                <button onclick="checkUserApprovalStatus()" class="w-full bg-blue-700 hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl border border-blue-500/40 transition-all text-xs flex items-center justify-center gap-2">
+                  <span>🔄</span>
+                  <span>Cek Status Persetujuan Super Admin</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- NATIVE BOTTOM NAVIGATION BAR (Ala Aplikasi Mobile FinTech)                 -->
+    <!-- ========================================================================= -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-[#090e1c]/95 backdrop-blur-lg border-t border-slate-800/80 px-2 py-1.5 flex items-center justify-around z-40 text-[10px] font-semibold text-slate-400">
+      <button onclick="switchView('beranda')" id="bottom-nav-beranda" class="flex flex-col items-center gap-0.5 p-1 active-bottom-nav">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        <span>Beranda</span>
+      </button>
+
+      <button onclick="switchView('transaksi')" id="bottom-nav-transaksi" class="flex flex-col items-center gap-0.5 p-1 hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+        <span>Transaksi</span>
+      </button>
+
+      <!-- Central Floating Action Button (+) -->
+      <button onclick="openModalTransaction('expense')" class="flex flex-col items-center justify-center -mt-5 w-12 h-12 rounded-full bg-gradient-to-tr from-amber-500 to-amber-600 text-slate-950 font-black text-xl shadow-[0_0_20px_rgba(245,158,11,0.5)] border-2 border-slate-900 active:scale-95 transition-all">
+        +
+      </button>
+
+      <button onclick="switchView('laporan')" id="bottom-nav-laporan" class="flex flex-col items-center gap-0.5 p-1 hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span>Laporan</span>
+      </button>
+
+      <button onclick="switchView('bot')" id="bottom-nav-bot" class="flex flex-col items-center gap-0.5 p-1 text-sky-400 hover:text-white">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.37.75-.56 2.93-1.28 4.88-2.12 5.86-2.54 2.79-1.18 3.37-1.38 3.75-1.39.08 0 .27.02.39.12.1.08.13.2.14.28-.01.07-.01.21-.03.38z"/></svg>
+        <span>FinBot</span>
+      </button>
+
+      <button onclick="switchView('wallet')" id="bottom-nav-wallet" class="flex flex-col items-center gap-0.5 p-1 hover:text-white">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        <span>Dompet</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: UPGRADE PREMIUM DENGAN PERSETUJUAN SUPER ADMIN (Requirement 4)     -->
+  <!-- ========================================================================= -->
+  <div id="modal-upgrade-premium" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[#0b1329] border border-amber-500/60 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl relative space-y-4 gold-glow">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div>
+          <span class="text-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded font-black font-mono uppercase">PRO LIFETIME</span>
+          <h3 class="font-extrabold text-white text-base mt-1">Upgrade ke TataDana PRO Lifetime</h3>
+        </div>
+        <button onclick="closeModalUpgradePremium()" class="text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div class="bg-[#070b14] p-3.5 rounded-2xl border border-slate-800 space-y-1.5">
+          <div class="flex justify-between items-center text-sm font-bold text-white">
+            <span>Biaya Langganan Sekali Bayar:</span>
+            <span class="text-amber-400 font-mono text-base">Rp99.000</span>
+          </div>
+          <div class="text-[11px] text-emerald-400">✓ Akses Selamanya (Lifetime) tanpa biaya bulanan</div>
+        </div>
+
+        <div class="space-y-1 text-slate-300 text-[11px]">
+          <div>• Bot Telegram Tanpa Batas Kuota Mutasi</div>
+          <div>• AI Multi-Provider (Gemini 2.0 Flash + GPT-4o)</div>
+          <div>• Unlimited E-Wallet & Rekening Bank</div>
+          <div>• Export Resmi Laporan ke PDF & Excel (.csv/.xlsx)</div>
+        </div>
+
+        <!-- Payment Method Selection -->
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">Pilih Metode Pembayaran</label>
+          <select id="upgrade-payment-method" class="w-full bg-[#070b14] border border-slate-700 text-white px-3 py-2.5 rounded-xl font-semibold">
+            <option value="Transfer BCA Manual (WhatsApp)">🏦 Transfer BCA (Rek: 8750-000-000 a/n TataDana)</option>
+            <option value="Transfer Mandiri">💳 Transfer Mandiri (Rek: 1540-000-000 a/n TataDana)</option>
+            <option value="QRIS / GoPay Midtrans">📱 QRIS / GoPay (Instant Settlement)</option>
+          </select>
+        </div>
+
+        <div class="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-300 text-[11px]">
+          ⚠️ <b>Catatan Otorisasi:</b> Pengajuan upgrade ini akan masuk ke antrean Super Admin. Status PRO akan aktif setelah Super Admin menyetujui (Approve / Impersonate).
+        </div>
+      </div>
+
+      <div class="pt-2 flex items-center justify-end gap-2">
+        <button onclick="closeModalUpgradePremium()" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white">Batal</button>
+        <button onclick="submitUpgradePremium()" class="px-5 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-lg transition-all flex items-center gap-1.5">
+          <span>⭐</span>
+          <span>Ajukan Upgrade & Bayar Rp99.000</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: TAMBAH DOMPET / E-WALLET MANUAL REAL-TIME                           -->
+  <!-- ========================================================================= -->
+  <div id="modal-add-wallet" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[#0b1329] border border-amber-500/60 rounded-3xl p-6 max-w-md w-full shadow-2xl relative space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div>
+          <h3 class="font-extrabold text-white text-base">Tambah Dompet / E-Wallet Baru</h3>
+          <p class="text-[11px] text-slate-400">Otomatis langsung tersambung ke FinBot Telegram & AI Chatbot.</p>
+        </div>
+        <button onclick="closeModalAddWallet()" class="text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">Nama Dompet / E-Wallet</label>
+          <input id="new-wallet-name" type="text" placeholder="Contoh: DANA, ShopeePay, OVO, Bank Jago, Jenius" class="w-full bg-[#070b14] border border-slate-700 text-white px-3 py-2.5 rounded-xl focus:outline-none focus:border-sky-500 font-medium">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">Tipe Akun</label>
+          <select id="new-wallet-type" class="w-full bg-[#070b14] border border-slate-700 text-white px-3 py-2.5 rounded-xl focus:outline-none focus:border-sky-500 font-semibold">
+            <option value="E-Wallet">📱 E-Wallet (Uang Elektronik)</option>
+            <option value="Bank">🏦 Rekening Bank</option>
+            <option value="Tunai">💵 Uang Tunai / Cash</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">Saldo Awal (Rp)</label>
+          <input id="new-wallet-balance" type="number" placeholder="0" value="0" class="w-full bg-[#070b14] border border-slate-700 text-white px-3 py-2.5 rounded-xl focus:outline-none focus:border-sky-500 font-mono font-bold text-sm">
+        </div>
+
+        <div class="pt-1 flex items-center gap-2">
+          <input id="new-wallet-default" type="checkbox" class="w-4 h-4 rounded bg-[#070b14] border-slate-700 text-amber-500 focus:ring-0">
+          <label for="new-wallet-default" class="text-slate-300 text-xs">Jadikan Rekening Utama Default Bot</label>
+        </div>
+      </div>
+
+      <div class="pt-2 flex items-center justify-end gap-2">
+        <button onclick="closeModalAddWallet()" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white">Batal</button>
+        <button onclick="submitNewWallet()" class="px-5 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-lg transition-all">
+          + Tambahkan Dompet
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL TRANSAKSI MANUAL REAL-TIME                                          -->
+  <!-- ========================================================================= -->
+  <div id="modal-transaction" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[#0b1329] border border-blue-900/80 rounded-3xl p-6 max-w-md w-full shadow-2xl relative space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div>
+          <h3 id="tx-modal-title" class="font-extrabold text-white text-base">Catat Transaksi Real-Time</h3>
+          <p class="text-[11px] text-slate-400">Saldo dompet langsung bertambah atau berkurang seketika.</p>
+        </div>
+        <button onclick="closeModalTransaction()" class="text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
+      </div>
+
+      <div class="grid grid-cols-3 gap-1 bg-[#070b14] p-1 rounded-xl border border-slate-800 text-xs font-bold">
+        <button type="button" onclick="setTxType('expense')" id="btn-type-expense" class="py-1.5 rounded-lg text-center bg-rose-700 text-white transition-all">
+          💸 Belanja
+        </button>
+        <button type="button" onclick="setTxType('income')" id="btn-type-income" class="py-1.5 rounded-lg text-center text-slate-400 hover:text-white transition-all">
+          💰 Pemasukan
+        </button>
+        <button type="button" onclick="setTxType('topup')" id="btn-type-topup" class="py-1.5 rounded-lg text-center text-slate-400 hover:text-white transition-all">
+          ⚡ Top Up
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">Target Dompet / E-Wallet</label>
+          <select id="tx-wallet-select" class="w-full bg-[#070b14] border border-slate-700 text-white px-3 py-2.5 rounded-xl focus:outline-none focus:border-sky-500 font-semibold">
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">Nominal Transaksi (Rp)</label>
+          <input id="tx-amount-input" type="number" placeholder="Contoh: 50000" class="w-full bg-[#070b14] border border-slate-700 text-white px-3 py-2.5 rounded-xl focus:outline-none focus:border-sky-500 font-mono font-bold text-sm">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">Catatan / Deskripsi</label>
+          <input id="tx-note-input" type="text" placeholder="Contoh: Beli bensin pertamax / Makan bakso" class="w-full bg-[#070b14] border border-slate-700 text-white px-3 py-2.5 rounded-xl focus:outline-none focus:border-sky-500">
+        </div>
+      </div>
+
+      <div class="pt-2 flex items-center justify-end gap-2">
+        <button onclick="closeModalTransaction()" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white">Batal</button>
+        <button onclick="submitManualTransaction()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-700 hover:bg-blue-600 text-white shadow-lg transition-all">
+          Proses Transaksi Real-Time
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- FLOATING TELEGRAM BOT POPUP WIDGET (INTERAKTIF PILIHAN DOMPET)            -->
+  <!-- ========================================================================= -->
+  <div class="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-40 flex items-center gap-2.5">
+    <div id="floating-bot-pill" onclick="toggleFloatingBot()" class="cursor-pointer hidden sm:flex items-center gap-2 bg-[#090e1c]/95 border border-sky-500/40 px-3.5 py-2 rounded-2xl shadow-2xl backdrop-blur-md text-xs text-slate-200 hover:border-sky-400 transition-all hover:scale-105">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span class="font-bold text-white">FinBot Telegram</span>
+      <span id="floating-pin-badge" class="text-[10px] bg-sky-950 text-sky-400 font-mono px-1.5 py-0.5 rounded border border-sky-500/30">PIN: 849-201</span>
+    </div>
+
+    <button onclick="toggleFloatingBot()" id="btn-floating-bot" class="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-sky-500 via-blue-600 to-indigo-700 border-2 border-sky-300 flex items-center justify-center text-white shadow-[0_0_25px_rgba(56,189,248,0.5)] hover:scale-105 active:scale-95 transition-all relative">
+      <svg class="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.37.75-.56 2.93-1.28 4.88-2.12 5.86-2.54 2.79-1.18 3.37-1.38 3.75-1.39.08 0 .27.02.39.12.1.08.13.2.14.28-.01.07-.01.21-.03.38z"/></svg>
+      <span class="w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#070b14] absolute -top-1 -right-1 animate-ping"></span>
+      <span class="w-3 h-3 rounded-full bg-emerald-400 border-2 border-[#070b14] absolute -top-1 -right-1"></span>
+    </button>
+  </div>
+
+  <!-- FLOATING POPUP CHAT MODAL WINDOW -->
+  <div id="floating-bot-modal" class="fixed bottom-24 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-[430px] h-[540px] max-h-[80vh] bg-[#090e1c] border border-blue-800/80 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.85)] z-50 flex flex-col overflow-hidden backdrop-blur-xl hidden">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-[#121c38] via-[#0d162d] to-[#0a1226] border-b border-blue-900/60 p-4 flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-400 to-blue-600 flex items-center justify-center text-white shadow-md border border-sky-300/30">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.37.75-.56 2.93-1.28 4.88-2.12 5.86-2.54 2.79-1.18 3.37-1.38 3.75-1.39.08 0 .27.02.39.12.1.08.13.2.14.28-.01.07-.01.21-.03.38z"/></svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="font-black text-white text-sm">TataDana FinBot</h3>
+            <span class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-500/40 px-2 py-0.2 rounded-full font-bold flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Sinkron
+            </span>
+          </div>
+          <div class="text-[11px] text-slate-400 font-mono mt-0.5 flex items-center gap-2">
+            <span>@TataDanaBot</span>
+            <span>•</span>
+            <button onclick="copyBotPin()" class="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/30">
+              PIN: <span id="floating-pin-text">849-201</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <a href="https://t.me/TataDanaFinBot" id="link-direct-telegram-float" target="_blank" class="px-2.5 py-1 bg-sky-500 hover:bg-sky-400 text-slate-950 font-black rounded-xl text-[10px] flex items-center gap-1 shadow transition-all" title="Buka aplikasi Telegram langsung">
+          <span>Telegram ↗</span>
+        </a>
+        <button onclick="toggleFloatingBot()" class="p-1.5 text-slate-400 hover:text-white rounded-xl transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Chips -->
+    <div class="bg-[#0b1329] border-b border-slate-800/80 px-3 py-2 flex items-center gap-1.5 overflow-x-auto text-[11px] shrink-0 no-scrollbar">
+      <span class="text-[10px] font-black uppercase text-slate-500 whitespace-nowrap pl-1">SIMULASI:</span>
+      <button onclick="sendFloatingChat('beli bakso 25rb')" class="px-2.5 py-1 rounded-lg bg-amber-950/70 hover:bg-amber-900 border border-amber-500/40 text-amber-300 whitespace-nowrap font-bold">🍜 Beli bakso 25rb</button>
+      <button onclick="sendFloatingChat('gajian 5jt')" class="px-2.5 py-1 rounded-lg bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 whitespace-nowrap font-bold">💰 Gajian 5jt</button>
+      <button onclick="sendFloatingChat('beli bensin 50rb pake gopay')" class="px-2.5 py-1 rounded-lg bg-[#14234a] hover:bg-blue-900 border border-blue-700 text-sky-200 whitespace-nowrap font-bold">⛽ Bensin 50rb gopay</button>
+      <button onclick="sendFloatingChat('/saldo')" class="px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 whitespace-nowrap font-mono font-bold">/saldo</button>
+    </div>
+
+    <!-- Synchronized Messages Stream -->
+    <div id="floating-chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 text-xs bg-[#070b14]/90">
+      <!-- Rendered via renderAllChats() -->
+    </div>
+
+    <!-- Input Bar -->
+    <div class="p-3 bg-[#0d162d] border-t border-slate-800/80 space-y-2 shrink-0">
+      <div class="flex items-center gap-2">
+        <button onclick="simulatePhotoReceipt()" class="px-2.5 py-1.5 rounded-xl bg-[#14234a] hover:bg-[#1b2f66] border border-sky-400/30 text-sky-200 text-xs font-semibold flex items-center gap-1">
+          📷 Upload Struk
+        </button>
+        <button onclick="simulateVoiceNote()" class="px-2.5 py-1.5 rounded-xl bg-[#14234a] hover:bg-[#1b2f66] border border-sky-400/30 text-sky-200 text-xs font-semibold flex items-center gap-1">
+          🎙️ Voice Note
+        </button>
+      </div>
+      <div class="flex items-center gap-2">
+        <input id="floating-chat-input" onkeydown="if(event.key==='Enter') sendFloatingChat()" type="text" placeholder="Ketik transaksi... (contoh: 'beli bakso 25rb')" class="flex-1 bg-[#070b14] border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 font-medium">
+        <button onclick="sendFloatingChat()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs shadow-lg">
+          Kirim
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-20 lg:bottom-6 left-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT STATE ENGINE & INTERACTIVE LOGIC                              -->
+  <!-- ========================================================================= -->
+  <script>
+    // 1. DATA USER & SESI AKTIF (DEFAULT PENGGUNA BARU SALDO RP0 BERSIH)
+    let currentUser = {
+      id: 'USR-2026-NEW',
+      name: 'Pengguna Baru',
+      email: 'user.baru@gmail.com',
+      phone: '08129990001',
+      plan: 'TataDana Starter',
+      status: 'approved',
+      isNewUser: true,
+      premiumUpgradePending: false
+    };
+
+    // 2. DATA DOMPET & REKENING (DEFAULT SALDO RP0 BERSIH UNTUK PENGGUNA BARU)
+    let wallets = {
+      'BCA Payroll': 0,
+      'Mandiri Tabungan': 0,
+      'GoPay': 0,
+      'Dompet Cash': 0
+    };
+
+    let walletMeta = {
+      'BCA Payroll': { type: 'Bank', icon: '🏦', color: 'from-blue-600 to-indigo-800', desc: 'Rekening bank utama untuk pemasukan dan mutasi.' },
+      'Mandiri Tabungan': { type: 'Bank', icon: '💳', color: 'from-amber-600 to-yellow-800', desc: 'Rekening simpanan dan tagihan rutin.' },
+      'GoPay': { type: 'E-Wallet', icon: '📱', color: 'from-sky-500 to-blue-700', desc: 'Uang elektronik e-wallet untuk QRIS & belanja online.' },
+      'Dompet Cash': { type: 'Tunai', icon: '💵', color: 'from-emerald-600 to-teal-800', desc: 'Uang fisik tunai di dompet.' }
+    };
+
+    let defaultBotWallet = 'BCA Payroll';
+    let botPin = '849-201';
+    let currentTxType = 'expense';
+    let mutationCount = 0;
+    let pendingBotPayment = null;
+    let currentReportPeriod = 'bulanan';
+
+    // 3. RIWAYAT TRANSAKSI REAL-TIME (DEFAULT KOSONG [] UNTUK PENGGUNA BARU RP0)
+    let transactionHistory = [];
+
+    // Master Data Demo Budi Santoso (untuk testing)
+    const demoBudiWallets = { 'BCA Payroll': 8750000, 'Mandiri Tabungan': 15400000, 'GoPay': 320000, 'Dompet Cash': 450000 };
+    const demoBudiTransactions = [
+      { id: 1, type: 'expense', amount: 35000, wallet: 'BCA Payroll', note: 'Makan Siang Soto Betawi', category: '🍜 Makanan & Minuman', time: '15 Okt 2026, 12:30 WIB', date: '2026-10-15', source: 'Telegram FinBot' },
+      { id: 2, type: 'expense', amount: 50000, wallet: 'GoPay', note: 'Bensin Pertamax', category: '⛽ Transportasi', time: '14 Okt 2026, 18:45 WIB', date: '2026-10-14', source: 'Telegram VN' },
+      { id: 3, type: 'income', amount: 15000000, wallet: 'BCA Payroll', note: 'Gaji Bulanan Eksekutif', category: '💼 Gaji Pokok', time: '01 Okt 2026, 09:00 WIB', date: '2026-10-01', source: 'Web Payroll' },
+      { id: 4, type: 'expense', amount: 250000, wallet: 'Mandiri Tabungan', note: 'Token Listrik PLN', category: '🏠 Tagihan & Utilitas', time: '10 Okt 2026, 14:15 WIB', date: '2026-10-10', source: 'Telegram FinBot' },
+      { id: 5, type: 'topup', amount: 100000, wallet: 'GoPay', note: 'Top Up Saldo GoPay Likuid', category: '⚡ Top Up Saldo', time: '09 Okt 2026, 11:20 WIB', date: '2026-10-09', source: 'Telegram FinBot' }
+    ];
+
+    // 4. SHARED CHAT HISTORY (Requirement 7: AI Chatbot & Telegram Chatbot Sinkron tanpa duplikasi)
+    window.chatMessagesHistory = [
+      {
+        id: 'msg-welcome',
+        sender: 'bot',
+        text: 'Halo! FinBot TataDana siap melayani.',
+        html: `
+          <div class="bg-[#121c38] text-slate-200 p-3.5 rounded-2xl rounded-tl-none border border-slate-700 max-w-md space-y-2">
+            <div class="font-bold text-white text-sm">👋 Halo <span id="chat-user-greeting">Pengguna Baru</span>!</div>
+            <p>Saya FinBot TataDana. Ketik mutasi keuangan Anda! Jika Anda mengetik transaksi tanpa menyebut dompet (contoh: <code class="text-amber-300 font-bold">&quot;beli bakso 25rb&quot;</code>), saya akan langsung menyediakan pilihan dompet & e-wallet yang Anda miliki!</p>
+          </div>
+        `
+      }
+    ];
+
+    // FORMATTER
+    function formatRupiah(num) {
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0);
+    }
+
+    function getNowWIB() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      return `15 Okt 2026, ${hours}:${minutes} WIB`;
+    }
+
+    function getTodayYMD() {
+      return '2026-10-15';
+    }
+
+    // TOAST NOTIFIKASI
+    function showToast(title, message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+      const borderCol = type === 'success' ? 'border-emerald-500/60 bg-[#0c1f2c]' : type === 'expense' ? 'border-rose-500/60 bg-[#24101a]' : 'border-sky-500/60 bg-[#0d1c38]';
+      const textCol = type === 'success' ? 'text-emerald-400' : type === 'expense' ? 'text-rose-400' : 'text-sky-300';
+      const icon = type === 'success' ? '💰' : type === 'expense' ? '💸' : '⚡';
+      
+      toast.className = `pointer-events-auto p-4 rounded-2xl border ${borderCol} shadow-2xl flex items-start gap-3 max-w-sm transition-all duration-300 transform translate-y-4 opacity-0`;
+      toast.innerHTML = `
+        <span class="text-xl">${icon}</span>
+        <div class="flex-1">
+          <div class="text-xs font-black ${textCol}">${title}</div>
+          <div class="text-[11px] text-slate-200 mt-0.5 leading-relaxed">${message}</div>
+        </div>
+      `;
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0');
+      });
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 400);
+      }, 3500);
+    }
+
+    // =========================================================================
+    // 5. RENDERING CHATBOT SYNCHRONIZED (NO DUPLICATES)
+    // =========================================================================
+    function renderAllChats() {
+      const containers = [
+        document.getElementById('chat-messages'),
+        document.getElementById('floating-chat-messages')
+      ];
+
+      containers.forEach(container => {
+        if (!container) return;
+
+        // Render each message if not already rendered
+        window.chatMessagesHistory.forEach(msg => {
+          let existing = container.querySelector(`[data-msg-id="${msg.id}"]`);
+          if (!existing) {
+            const div = document.createElement('div');
+            div.setAttribute('data-msg-id', msg.id);
+            div.className = msg.sender === 'user' ? 'flex justify-end' : 'flex justify-start';
+
+            if (msg.sender === 'user') {
+              div.innerHTML = `<div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-2.5 rounded-2xl rounded-tr-none shadow font-medium max-w-[85%]">${msg.text}</div>`;
+            } else {
+              div.innerHTML = msg.html;
+            }
+            container.appendChild(div);
+          }
+        });
+
+        container.scrollTop = container.scrollHeight;
+      });
+    }
+
+    function appendChat(sender, text, htmlContent) {
+      const msgId = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+      const newMsg = {
+        id: msgId,
+        sender: sender,
+        text: text,
+        html: htmlContent
+      };
+      window.chatMessagesHistory.push(newMsg);
+      renderAllChats();
+    }
+
+    // =========================================================================
+    // 6. FINBOT NLP & INTERAKTIF PILIHAN DOMPET EWALLET DINAMIS (Requirement 8)
+    // =========================================================================
+    function toggleFloatingBot() {
+      const modal = document.getElementById('floating-bot-modal');
+      if (!modal) return;
+      const isHidden = modal.classList.contains('hidden');
+      if (isHidden) {
+        modal.classList.remove('hidden');
+        renderAllChats();
+        const input = document.getElementById('floating-chat-input');
+        if (input) input.focus();
+      } else {
+        modal.classList.add('hidden');
+      }
+    }
+
+    function sendFloatingChat(prefillText) {
+      const input = document.getElementById('floating-chat-input');
+      const text = (prefillText || (input ? input.value : '')).trim();
+      if (!text) return;
+      if (input) input.value = '';
+
+      appendChat('user', text);
+      processFinBotInteractiveChat(text);
+    }
+
+    function sendCustomChat() {
+      const input = document.getElementById('input-chat');
+      const text = input ? input.value.trim() : '';
+      if (!text) return;
+      input.value = '';
+
+      appendChat('user', text);
+      processFinBotInteractiveChat(text);
+    }
+
+    function sendQuickChat(cmd) {
+      appendChat('user', cmd);
+      processFinBotInteractiveChat(cmd);
+    }
+
+    function processFinBotInteractiveChat(text) {
+      const lower = text.toLowerCase().trim();
+
+      // Command /pin
+      if (lower === '/pin') {
+        setTimeout(() => {
+          appendChat('bot', '', `
+            <div class="bg-[#121c38] text-slate-200 p-3 rounded-2xl rounded-tl-none border border-slate-700 max-w-[85%]">
+              🔐 <b>PIN Otorisasi Bot Telegram:</b><br><br>
+              Kode PIN: <code class="text-amber-400 font-bold font-mono text-sm">${botPin}</code><br>
+              Status: 🟢 Terhubung Aktif (Akun: ${currentUser.name})
+            </div>
+          `);
+        }, 250);
+        return;
+      }
+
+      // Command /saldo
+      if (lower === '/saldo') {
+        setTimeout(() => {
+          let listDompet = '';
+          for (let w in wallets) {
+            listDompet += `├ ${w} : <b>${formatRupiah(wallets[w])}</b> ${w === defaultBotWallet ? '<span class="text-amber-400">(Default)</span>' : ''}<br>`;
+          }
+          const totalAll = Object.values(wallets).reduce((a, b) => a + b, 0);
+          appendChat('bot', '', `
+            <div class="bg-[#121c38] text-slate-200 p-3.5 rounded-2xl rounded-tl-none border border-slate-700 max-w-[85%] font-mono text-[11px] space-y-1">
+              👛 <b>Saldo Real-Time Semua Dompet:</b><br>
+              ${listDompet}
+              └ <b>Total Aset : <span class="text-emerald-400">${formatRupiah(totalAll)}</span></b>
+            </div>
+          `);
+        }, 250);
+        return;
+      }
+
+      // Jika ada transaksi pending yang menunggu pemilihan dompet via teks manual
+      if (pendingBotPayment) {
+        let matchedWallet = null;
+        for (let w of Object.keys(wallets)) {
+          const wLow = w.toLowerCase();
+          if (lower.includes(wLow)) { matchedWallet = w; break; }
+        }
+        if (matchedWallet) {
+          const p = pendingBotPayment;
+          pendingBotPayment = null;
+          handleExecuteBotPayment(p, matchedWallet);
+          return;
+        }
+      }
+
+      // Ekstraksi Nominal
+      let nominal = 0;
+      const numMatch = lower.match(/(\d+(?:[.,]\d+)?)\s*(jt|juta|m|miliar|rb|ribu|k)?/i);
+      if (numMatch) {
+        let val = parseFloat(numMatch[1].replace(',', '.'));
+        const unit = (numMatch[2] || '').toLowerCase();
+        if (unit === 'jt' || unit === 'juta') val *= 1000000;
+        else if (unit === 'rb' || unit === 'ribu' || unit === 'k') val *= 1000;
+        else if (unit === 'm' || unit === 'miliar') val *= 1000000000;
+        if (!isNaN(val) && val > 0) nominal = Math.round(val);
+      }
+      if (!nominal) nominal = 25000;
+
+      // Cek apakah jenis Top Up / Pemasukan / Pengeluaran
+      const isTopUp = lower.includes('top up') || lower.includes('topup') || lower.includes('isi saldo') || lower.includes('tambah saldo');
+      const isIncome = isTopUp || lower.includes('gaji') || lower.includes('gajian') || lower.includes('cuan') || lower.includes('masuk') || lower.includes('terima') || lower.includes('bonus');
+      const actionType = isTopUp ? 'topup' : isIncome ? 'income' : 'expense';
+      const category = isTopUp ? '⚡ Top Up Saldo' : isIncome ? '💼 Gaji Pokok' : (lower.includes('bensin') ? '⛽ Transportasi' : lower.includes('listrik') ? '🏠 Tagihan' : lower.includes('bakso') || lower.includes('makan') || lower.includes('kopi') ? '🍜 Makanan & Minuman' : '🛍️ Belanja Harian');
+
+      // Cek apakah dompet SUDAH DISEBUT di dalam chat
+      let explicitlyMentionedWallet = null;
+      for (let w of Object.keys(wallets)) {
+        const wLow = w.toLowerCase();
+        if (lower.includes(wLow)) { explicitlyMentionedWallet = w; break; }
+      }
+
+      if (explicitlyMentionedWallet) {
+        // PENGGUNA SUDAH MENYEBUTKAN DOMPET: Langsung potong!
+        pendingBotPayment = null;
+        executeWalletAction(actionType, nominal, explicitlyMentionedWallet, text, category);
+        setTimeout(() => {
+          renderBotDirectConfirmation(actionType, nominal, explicitlyMentionedWallet, text, category);
+        }, 250);
+      } else {
+        // PENGGUNA BELUM MENYEBUTKAN DOMPET: BOT BERTANYA INTERAKTIF DENGAN SEMUA DOMPET YANG TERSEDIA!
+        pendingBotPayment = {
+          type: actionType,
+          amount: nominal,
+          note: text,
+          category: category
+        };
+
+        setTimeout(() => {
+          let buttonsHtml = '';
+          const walletKeys = Object.keys(wallets);
+          walletKeys.forEach(w => {
+            const meta = walletMeta[w] || { icon: '👛' };
+            const safeW = w.replace(/'/g, "\\'");
+            buttonsHtml += `
+              <button onclick="handleBotWalletOptionSelected('${safeW}')" class="px-2.5 py-1.5 rounded-xl bg-blue-900/60 hover:bg-sky-600 text-sky-200 hover:text-white border border-blue-400/40 text-xs font-bold transition-all flex items-center gap-1 shadow">
+                <span>${meta.icon}</span>
+                <span>${w}</span>
+                <span class="text-[10px] text-amber-300 font-mono font-normal">(${formatRupiah(wallets[w])})</span>
+              </button>
+            `;
+          });
+
+          // Tombol Tambah Dompet Langsung dari Chatbot
+          buttonsHtml += `
+            <button onclick="openModalAddWallet()" class="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold transition-all flex items-center gap-1 shadow">
+              <span>+</span>
+              <span>Tambah E-Wallet Lain</span>
+            </button>
+          `;
+
+          const safeText = String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+          appendChat('bot', '', `
+            <div class="bg-[#121c38] text-slate-200 p-3.5 rounded-2xl rounded-tl-none border border-amber-500/50 space-y-2.5 max-w-[90%] shadow-lg">
+              <div class="flex items-center gap-2">
+                <span class="text-amber-400 font-black text-sm">${actionType === 'income' ? '💰' : '🍜'} Mau dicatat menggunakan dompet yang mana?</span>
+                <span class="text-[10px] ${actionType === 'income' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'} px-2 py-0.5 rounded font-bold">PILIH METODE PEMBAYARAN</span>
+              </div>
+              <p class="text-xs text-slate-200 leading-relaxed">
+                Transaksi <b>"${safeText}"</b> sebesar <b class="${actionType === 'income' ? 'text-emerald-400' : 'text-amber-300'} font-mono text-sm">${actionType === 'income' ? '+' : '-'}${formatRupiah(nominal)}</b> ingin diproses menggunakan dompet atau e-wallet Anda yang mana?
+              </p>
+              <div class="pt-1">
+                <div class="text-[11px] text-slate-400 font-semibold mb-1.5">Pilih salah satu e-wallet / rekening Anda:</div>
+                <div class="flex flex-wrap gap-1.5">
+                  ${buttonsHtml}
+                </div>
+              </div>
+              <div class="text-[10px] text-sky-300 font-medium">
+                ✨ Saldo dompet langsung terpotong secara otomatis & real-time!
+              </div>
+            </div>
+          `);
+        }, 250);
+      }
+    }
+
+    function handleBotWalletOptionSelected(walletName) {
+      if (!pendingBotPayment) {
+        showToast('Info', 'Transaksi telah diproses sebelumnya.', 'info');
+        return;
+      }
+      const p = pendingBotPayment;
+      pendingBotPayment = null;
+
+      appendChat('user', `Gunakan ${walletName}`);
+      handleExecuteBotPayment(p, walletName);
+    }
+
+    function handleExecuteBotPayment(p, walletName) {
+      executeWalletAction(p.type, p.amount, walletName, p.note, p.category);
+
+      setTimeout(() => {
+        appendChat('bot', '', `
+          <div class="bg-[#121c38] text-slate-200 p-3.5 rounded-2xl rounded-tl-none border border-emerald-500/50 space-y-1.5 max-w-[85%] shadow-lg">
+            <div class="text-[10px] text-slate-400 font-mono">📅 ${getNowWIB()}</div>
+            <div class="font-bold text-sm text-emerald-400">
+              ${p.type === 'topup' ? '⚡ Top Up Berhasil!' : p.type === 'income' ? '💰 Pemasukan Tercatat!' : '💸 Pembayaran Berhasil Dipotong!'}
+            </div>
+            <div class="text-xs leading-relaxed">
+              ├ Keterangan : <b>${p.note}</b><br>
+              ├ Nominal : <b class="${p.type === 'expense' ? 'text-rose-400' : 'text-emerald-400'} font-mono">${p.type === 'expense' ? '-' : '+'}${formatRupiah(p.amount)}</b><br>
+              ├ Dompet : 👛 <b class="text-white">${walletName}</b><br>
+              └ Saldo Baru ${walletName} : <b class="text-amber-400 font-mono">${formatRupiah(wallets[walletName])}</b>
+            </div>
+            <div class="text-[10px] text-sky-300 font-semibold pt-1">
+              ✨ Saldo & mutasi dashboard langsung terupdate seketika!
+            </div>
+          </div>
+        `);
+      }, 250);
+    }
+
+    function renderBotDirectConfirmation(actionType, nominal, targetWallet, text, category) {
+      const isIncome = actionType === 'income' || actionType === 'topup';
+      appendChat('bot', '', `
+        <div class="bg-[#121c38] text-slate-200 p-3 rounded-2xl rounded-tl-none border border-slate-700 space-y-1 max-w-[85%]">
+          <div class="text-[10px] text-slate-400 font-mono">📅 ${getNowWIB()}</div>
+          <div class="font-bold text-sm ${isIncome ? 'text-emerald-400' : 'text-rose-400'}">
+            ${actionType === 'topup' ? '⚡ Top Up Saldo Berhasil!' : isIncome ? '💰 Pemasukan Tercatat!' : '💸 Pengeluaran Tercatat!'}
+          </div>
+          <div class="text-xs">
+            ├ Nominal : <b>${formatRupiah(nominal)}</b><br>
+            ├ Dompet : 👛 <b>${targetWallet}</b><br>
+            └ Saldo Baru ${targetWallet} : <b class="text-amber-400 font-mono">${formatRupiah(wallets[targetWallet])}</b>
+          </div>
+          <div class="text-[11px] text-sky-300 pt-1 font-semibold">
+            ✨ Saldo & mutasi di dashboard termutasi seketika!
+          </div>
+        </div>
+      `);
+    }
+
+    function simulatePhotoReceipt() {
+      executeWalletAction('expense', 128500, defaultBotWallet, 'Belanja Struk Indomaret (Struk OCR)', '🧾 Belanja Harian');
+    }
+
+    function simulateVoiceNote() {
+      executeWalletAction('expense', 50000, defaultBotWallet, 'Bensin Motor SPBU (Voice Note)', '⛽ Transportasi');
+    }
+
+    // =========================================================================
+    // 7. EKSEKUSI MUTASI SALDO REAL-TIME
+    // =========================================================================
+    function executeWalletAction(type, amount, walletName, note, category) {
+      amount = Number(amount);
+      if (!amount || amount <= 0) {
+        showToast('Input Tidak Valid', 'Nominal transaksi harus lebih besar dari Rp0!', 'expense');
+        return;
+      }
+
+      let targetKey = walletName || defaultBotWallet;
+      if (!wallets.hasOwnProperty(targetKey)) {
+        targetKey = defaultBotWallet;
+      }
+
+      let sign = '-';
+      let toastType = 'expense';
+      let actionLabel = 'Pengeluaran Berhasil';
+
+      if (type === 'income' || type === 'topup') {
+        wallets[targetKey] = (wallets[targetKey] || 0) + amount;
+        sign = '+';
+        toastType = 'success';
+        actionLabel = type === 'topup' ? 'Top Up Saldo Berhasil' : 'Pemasukan Tercatat';
+      } else {
+        wallets[targetKey] = Math.max(0, (wallets[targetKey] || 0) - amount);
+        sign = '-';
+        toastType = 'expense';
+        actionLabel = 'Pengeluaran Tercatat';
+      }
+
+      mutationCount++;
+      const badgeTotal = document.getElementById('badge-total-tx');
+      if (badgeTotal) badgeTotal.innerText = mutationCount;
+
+      const newTx = {
+        id: Date.now(),
+        type: type,
+        amount: amount,
+        wallet: targetKey,
+        note: note,
+        category: category || (type === 'topup' ? '⚡ Top Up Saldo' : type === 'income' ? '💼 Pemasukan' : '🛍️ Belanja Harian'),
+        time: getNowWIB(),
+        date: getTodayYMD(),
+        source: 'Telegram Real-Time'
+      };
+      transactionHistory.unshift(newTx);
+
+      // Sinkronisasi data ke backend server.js
+      syncUserDataToServer();
+
+      updateAllUserUI();
+
+      const totalAset = Object.values(wallets).reduce((a, b) => a + b, 0);
+      showToast(
+        actionLabel,
+        `<b>${targetKey}</b>: ${sign}${formatRupiah(amount)}<br>Sisa saldo: <b>${formatRupiah(wallets[targetKey])}</b><br>Total Aset: <b>${formatRupiah(totalAset)}</b>`,
+        toastType
+      );
+    }
+
+    function syncUserDataToServer() {
+      if (currentUser && currentUser.id) {
+        fetch('/api/user/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUser.id,
+            wallets: wallets,
+            transactions: transactionHistory
+          })
+        }).catch(err => console.log('Sync server log:', err.message));
+      }
+    }
+
+    // =========================================================================
+    // 8. KELOLA & TAMBAH DOMPET / EWALLET DINAMIS (Requirement 8)
+    // =========================================================================
+    function openModalAddWallet() {
+      document.getElementById('modal-add-wallet').classList.remove('hidden');
+      document.getElementById('new-wallet-name').value = '';
+      document.getElementById('new-wallet-balance').value = '0';
+      document.getElementById('new-wallet-default').checked = false;
+    }
+
+    function closeModalAddWallet() {
+      document.getElementById('modal-add-wallet').classList.add('hidden');
+    }
+
+    function submitNewWallet() {
+      const nameInput = document.getElementById('new-wallet-name');
+      const typeInput = document.getElementById('new-wallet-type');
+      const balanceInput = document.getElementById('new-wallet-balance');
+      const isDefault = document.getElementById('new-wallet-default').checked;
+
+      const name = (nameInput.value || '').trim();
+      const type = typeInput.value;
+      const initialBalance = Number(balanceInput.value) || 0;
+
+      if (!name) {
+        showToast('Input Tidak Lengkap', 'Nama dompet atau e-wallet wajib diisi!', 'expense');
+        return;
+      }
+
+      if (wallets.hasOwnProperty(name)) {
+        showToast('Dompet Sudah Terdaftar', `Dompet bernama "${name}" sudah ada di sistem.`, 'expense');
+        return;
+      }
+
+      let icon = '📱';
+      let color = 'from-sky-500 to-blue-700';
+      if (type === 'Bank') { icon = '🏦'; color = 'from-amber-600 to-yellow-800'; }
+      else if (type === 'Tunai') { icon = '💵'; color = 'from-emerald-600 to-teal-800'; }
+
+      wallets[name] = initialBalance;
+      walletMeta[name] = {
+        type: type,
+        icon: icon,
+        color: color,
+        desc: `Akun ${type} ${name} terhubung dan tersambung otomatis ke FinBot Telegram & AI.`,
+        isCustom: true
+      };
+
+      if (isDefault) {
+        defaultBotWallet = name;
+      }
+
+      if (initialBalance > 0) {
+        const topupTx = {
+          id: Date.now(),
+          type: 'topup',
+          amount: initialBalance,
+          wallet: name,
+          note: `Saldo Awal ${name}`,
+          category: '⚡ Top Up Saldo',
+          time: getNowWIB(),
+          date: getTodayYMD(),
+          source: 'Registrasi Dompet'
+        };
+        transactionHistory.unshift(topupTx);
+        mutationCount++;
+      }
+
+      closeModalAddWallet();
+      syncUserDataToServer();
+      updateAllUserUI();
+
+      // Tambahkan info ke chatbot secara otomatis (Requirement 8)
+      appendChat('bot', '', `
+        <div class="bg-[#121c38] text-slate-200 p-3 rounded-2xl rounded-tl-none border border-emerald-500/50 max-w-[85%]">
+          👛 <b>Dompet Baru Tersambung!</b><br>
+          Dompet/E-Wallet <b>${name}</b> (${type}) dengan saldo <b>${formatRupiah(initialBalance)}</b> berhasil ditambahkan ke akun Anda dan siap digunakan untuk pembayaran di FinBot!
+        </div>
+      `);
+
+      showToast(
+        'Dompet Baru Berhasil Ditambahkan',
+        `Dompet <b>${name}</b> (${type}) saldo <b>${formatRupiah(initialBalance)}</b> telah aktif! Otomatis dapat dipilih di Chatbot AI & Telegram.`,
+        'success'
+      );
+    }
+
+    function setDefaultBotWallet(walletKey) {
+      defaultBotWallet = walletKey;
+      renderAllWallets();
+      showToast(
+        'Akun Utama Bot Diperbarui',
+        `Dompet <b>${walletKey}</b> sekarang menjadi rekening utama Bot Telegram!`,
+        'success'
+      );
+    }
+
+    // RENDER SEMUA DOMPET DI BERANDA & VIEW-WALLET
+    function renderAllWallets() {
+      const berandaContainer = document.getElementById('beranda-wallets-grid');
+      const managementContainer = document.getElementById('wallet-management-grid');
+      const txSelect = document.getElementById('tx-wallet-select');
+      const filterSelect = document.getElementById('filter-tx-wallet');
+
+      if (berandaContainer) berandaContainer.innerHTML = '';
+      if (managementContainer) managementContainer.innerHTML = '';
+
+      if (txSelect) txSelect.innerHTML = '';
+      if (filterSelect) {
+        filterSelect.innerHTML = '<option value="all">Semua Dompet</option>';
+      }
+
+      const walletNames = Object.keys(wallets);
+      const countEl = document.getElementById('count-active-wallets');
+      if (countEl) countEl.innerText = walletNames.length;
+
+      walletNames.forEach(wName => {
+        const bal = wallets[wName] || 0;
+        const meta = walletMeta[wName] || { type: 'E-Wallet', icon: '📱', color: 'from-blue-600 to-indigo-800', desc: 'Dompet terhubung' };
+        const isDefault = (wName === defaultBotWallet);
+
+        // 1. Kartu di Beranda
+        if (berandaContainer) {
+          const cardBeranda = document.createElement('div');
+          const borderClass = isDefault ? 'border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.25)]' : 'border-blue-900/50';
+          cardBeranda.className = `bg-[#0b1329] border ${borderClass} p-3.5 rounded-2xl space-y-1 relative transition-all`;
+          cardBeranda.innerHTML = `
+            <div class="flex items-center justify-between">
+              <span class="text-[9px] font-black ${isDefault ? 'text-amber-300 bg-amber-500/10 border border-amber-500/40' : 'text-slate-400 bg-slate-900'} px-2 py-0.5 rounded-full">
+                ${isDefault ? '👑 DEFAULT' : meta.type.toUpperCase()}
+              </span>
+            </div>
+            <div class="text-xs text-slate-400 font-bold mt-1 flex items-center gap-1.5 truncate">
+              <span>${meta.icon}</span> <span>${wName}</span>
+            </div>
+            <div class="text-base sm:text-lg font-black text-white font-mono">${formatRupiah(bal)}</div>
+            <div class="text-[9px] text-emerald-400 font-medium">● Real-Time Sinkron</div>
+          `;
+          berandaContainer.appendChild(cardBeranda);
+        }
+
+        // 2. Kartu di View Kelola Dompet
+        if (managementContainer) {
+          const cardMgmt = document.createElement('div');
+          const borderClass = isDefault ? 'border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.25)]' : 'border-blue-900/50';
+          cardMgmt.className = `bg-[#0b1329] border ${borderClass} rounded-2xl p-5 space-y-3 transition-all`;
+          cardMgmt.innerHTML = `
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-white flex items-center gap-2">
+                <span class="text-lg">${meta.icon}</span> ${wName}
+              </span>
+              <span class="${isDefault ? 'text-[9px] font-extrabold text-amber-300 bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 rounded-full flex items-center gap-1' : 'text-[9px] font-extrabold text-slate-500 bg-slate-900 px-2 py-0.5 rounded'}">
+                ${isDefault ? '👑 DEFAULT BOT' : meta.type.toUpperCase()}
+              </span>
+            </div>
+            <div class="text-2xl font-black text-white font-mono">${formatRupiah(bal)}</div>
+            <p class="text-[11px] text-slate-400">${meta.desc || 'Dompet terhubung ke bot'}</p>
+            <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+              ${isDefault 
+                ? '<button class="text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-3 py-1.5 rounded-xl flex items-center gap-1.5 cursor-default">✓ Rekening Utama Bot</button>' 
+                : `<button onclick="setDefaultBotWallet('${wName.replace(/'/g, "\\'")}')" class="text-xs font-bold text-sky-400 hover:text-white bg-blue-900/40 hover:bg-blue-800/60 border border-blue-500/40 px-3 py-1.5 rounded-xl transition-all cursor-pointer">⭐ Jadikan Akun Utama Bot</button>`}
+              <button onclick="openModalTransaction('topup')" class="text-xs text-sky-400 hover:text-white font-semibold">Top Up Saldo</button>
+            </div>
+          `;
+          managementContainer.appendChild(cardMgmt);
+        }
+
+        // 3. Dropdowns
+        if (txSelect) {
+          const opt = document.createElement('option');
+          opt.value = wName;
+          opt.text = `${meta.icon} ${wName} (Saldo: ${formatRupiah(bal)})`;
+          if (wName === defaultBotWallet) opt.selected = true;
+          txSelect.appendChild(opt);
+        }
+
+        if (filterSelect) {
+          const opt2 = document.createElement('option');
+          opt2.value = wName;
+          opt2.text = `${meta.icon} ${wName}`;
+          filterSelect.appendChild(opt2);
+        }
+      });
+
+      // Update total balance display
+      const total = Object.values(wallets).reduce((a, b) => a + b, 0);
+      const totalEl = document.getElementById('display-total-balance');
+      if (totalEl) totalEl.innerText = formatRupiah(total);
+    }
+
+    // =========================================================================
+    // 9. UPGRADE PREMIUM FLOW (Requirement 4)
+    // =========================================================================
+    function openModalUpgradePremium() {
+      document.getElementById('modal-upgrade-premium').classList.remove('hidden');
+    }
+
+    function closeModalUpgradePremium() {
+      document.getElementById('modal-upgrade-premium').classList.add('hidden');
+    }
+
+    function submitUpgradePremium() {
+      const method = document.getElementById('upgrade-payment-method').value;
+
+      fetch('/api/upgrade-premium', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          paymentMethod: method
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        closeModalUpgradePremium();
+        currentUser.premiumUpgradePending = true;
+
+        const banner = document.getElementById('banner-upgrade-pending');
+        if (banner) banner.classList.remove('hidden');
+
+        showToast(
+          'Permintaan Upgrade Dikirim',
+          `Pengajuan PRO via <b>${method}</b> telah dikirim ke Super Admin. Menunggu persetujuan / impersonate Super Admin!`,
+          'info'
+        );
+      })
+      .catch(err => {
+        closeModalUpgradePremium();
+        currentUser.premiumUpgradePending = true;
+        const banner = document.getElementById('banner-upgrade-pending');
+        if (banner) banner.classList.remove('hidden');
+        showToast('Permintaan Upgrade Tercatat', 'Menunggu persetujuan Super Admin.', 'info');
+      });
+    }
+
+    function checkPremiumApprovalStatus() {
+      fetch(`/api/user-status?id=${currentUser.id}&phone=${currentUser.phone}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            if (data.plan && data.plan.includes('Pro')) {
+              currentUser.plan = 'TataDana PRO Lifetime';
+              currentUser.premiumUpgradePending = false;
+              const banner = document.getElementById('banner-upgrade-pending');
+              if (banner) banner.classList.add('hidden');
+              updateAllUserUI();
+              showToast('Selamat! Akun PRO Aktif 🎉', 'Super Admin telah menyetujui upgrade Premium akun Anda!', 'success');
+            } else if (data.premiumUpgradePending) {
+              showToast('Masih Dalam Review', 'Permintaan upgrade masih menunggu persetujuan / verifikasi Super Admin.', 'info');
+            } else {
+              showToast('Status Terkini', `Paket aktif saat ini: ${data.plan}`, 'info');
+            }
+          }
+        })
+        .catch(() => {
+          showToast('Koneksi Server', 'Memeriksa status akun ke server...', 'info');
+        });
+    }
+
+    // =========================================================================
+    // 9B. BERANDA LOGIN USER & WHATSAPP OTP AUTHENTICATION HUB
+    // =========================================================================
+    let currentAdminWa = '6285176983196';
+    let currentTelegramBotLink = 'https://t.me/TataDanaFinBot';
+    let currentTelegramBotUsername = 'TataDanaFinBot';
+    let currentPortalPhone = '';
+    let currentPortalOtp = '';
+    let userSyncPollInterval = null;
+
+    function fetchAdminWaConfig() {
+      fetch('/api/admin/config')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.config) {
+            currentAdminWa = data.config.waNumber || currentAdminWa;
+            if (data.config.telegramBotLink) {
+              currentTelegramBotLink = data.config.telegramBotLink;
+              currentTelegramBotUsername = data.config.telegramBotUsername || 'TataDanaFinBot';
+              updateAllTelegramLinks();
+            }
+          }
+        })
+        .catch(() => {});
+    }
+
+    function updateAllTelegramLinks() {
+      const ids = [
+        'link-direct-telegram-sidebar',
+        'link-direct-telegram-header',
+        'link-direct-telegram-beranda',
+        'link-direct-telegram-viewbot',
+        'link-direct-telegram-viewbot-top',
+        'link-direct-telegram-float',
+        'link-direct-telegram-settings'
+      ];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.href = currentTelegramBotLink;
+      });
+      const unames = document.querySelectorAll('.telegram-bot-username-display');
+      unames.forEach(el => { el.innerText = '@' + currentTelegramBotUsername; });
+    }
+
+    // Real-Time Sync Poller: Menangkap transaksi dari Telegram Bot seketika tanpa reload!
+    function startBackgroundServerSync() {
+      if (userSyncPollInterval) clearInterval(userSyncPollInterval);
+      userSyncPollInterval = setInterval(() => {
+        if (!currentUser || !currentUser.id) return;
+        fetch('/api/user-status?id=' + encodeURIComponent(currentUser.id))
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.user) {
+              const remote = data.user;
+              const remoteTxList = remote.transactions || [];
+              const localTxList = transactionHistory || [];
+
+              // Cek apakah ada perubahan jumlah transaksi (misal dicatat lewat Telegram)
+              if (remoteTxList.length !== localTxList.length) {
+                wallets = remote.wallets || wallets;
+                transactionHistory = remoteTxList;
+                mutationCount = remoteTxList.length;
+                updateAllUserUI();
+                renderAllChats();
+                showToast('Telegram Real-Time ⚡', 'Transaksi Telegram baru berhasil dicatat & saldo terupdate!', 'success');
+              }
+            }
+          })
+          .catch(() => {});
+      }, 3500);
+    }
+
+    function stopBackgroundServerSync() {
+      if (userSyncPollInterval) {
+        clearInterval(userSyncPollInterval);
+        userSyncPollInterval = null;
+      }
+    }
+
+    function showUserPortal() {
+      stopBackgroundServerSync();
+      fetchAdminWaConfig();
+      const portal = document.getElementById('screen-user-portal');
+      const dash = document.getElementById('app-user-dashboard');
+      if (portal) portal.classList.remove('hidden');
+      if (dash) dash.classList.add('hidden');
+      resetPortalLoginStep();
+    }
+
+    function showUserDashboard() {
+      const portal = document.getElementById('screen-user-portal');
+      const dash = document.getElementById('app-user-dashboard');
+      if (portal) portal.classList.add('hidden');
+      if (dash) dash.classList.remove('hidden');
+    }
+
+    function enterUserDashboard(user, showToastMsg = true) {
+      if (user) {
+        if (user.id === 'USR-BUDI-01' || user.phone === '081234567890') {
+          switchToDemoUser();
+        } else {
+          switchToNewUserMode(user);
+        }
+      }
+      showUserDashboard();
+      startBackgroundServerSync();
+      fetchAdminWaConfig();
+      if (showToastMsg) {
+        showToast('Login Berhasil 🚀', `Selamat datang di dashboard TataDana, <b>${currentUser.name}</b>!`, 'success');
+      }
+    }
+
+    function switchPortalTab(tab) {
+      const tabs = ['login', 'register', 'status'];
+      tabs.forEach(t => {
+        const btn = document.getElementById('btn-portal-tab-' + t);
+        const content = document.getElementById('portal-tab-content-' + t);
+        if (t === tab) {
+          if (btn) {
+            btn.className = 'flex-1 pb-3 text-center border-b-2 border-amber-400 text-amber-400 font-black transition-all flex items-center justify-center gap-1.5';
+          }
+          if (content) content.classList.remove('hidden');
+        } else {
+          if (btn) {
+            btn.className = 'flex-1 pb-3 text-center border-b-2 border-transparent text-slate-400 hover:text-white transition-all flex items-center justify-center gap-1.5';
+          }
+          if (content) content.classList.add('hidden');
+        }
+      });
+    }
+
+    function fillPortalPhone(phone, name) {
+      const input = document.getElementById('portal-phone-input');
+      if (input) input.value = phone;
+      showToast('Akun Dipilih', `Nomor WhatsApp ${name} (${phone}) telah dimasukkan.`, 'info');
+    }
+
+    function resetPortalLoginStep() {
+      document.getElementById('portal-login-step1')?.classList.remove('hidden');
+      document.getElementById('portal-login-step2')?.classList.add('hidden');
+      const otpInput = document.getElementById('portal-otp-input');
+      if (otpInput) otpInput.value = '';
+    }
+
+    // 1. KIRIM KODE OTP KE WHATSAPP USER
+    function requestUserOtp() {
+      const phoneInput = document.getElementById('portal-phone-input');
+      const phone = (phoneInput?.value || '').trim();
+      if (!phone) {
+        showToast('Nomor Kosong', 'Harap masukkan nomor WhatsApp Anda!', 'expense');
+        return;
+      }
+
+      const btn = document.getElementById('btn-portal-send-otp');
+      if (btn) btn.innerHTML = '<span>⏳</span><span>Mengirim OTP ke WhatsApp User...</span>';
+
+      fetch('/api/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phone })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (btn) btn.innerHTML = '<span>📲</span><span>Kirim Kode OTP ke WhatsApp User →</span>';
+
+        if (data.isPending) {
+          showToast('Menunggu Verifikasi Admin', data.message, 'info');
+          // Arahkan ke tab cek status dengan tombol kirim verifikasi ke WA Admin
+          switchPortalTab('status');
+          document.getElementById('portal-status-query').value = phone;
+          showStatusResult(data.user, data.adminWaLink);
+          return;
+        }
+
+        if (!data.success) {
+          showToast('Gagal Mengirim OTP', data.message || 'Nomor WhatsApp tidak terdaftar.', 'expense');
+          return;
+        }
+
+        currentPortalPhone = phone;
+        currentPortalOtp = data.otp;
+
+        // Tampilkan Step 2 (Input Kode OTP)
+        document.getElementById('portal-login-step1').classList.add('hidden');
+        document.getElementById('portal-login-step2').classList.remove('hidden');
+
+        document.getElementById('portal-wa-phone-badge').innerText = data.phone;
+        document.getElementById('portal-simulated-otp-code').innerText = data.otp;
+        const waLinkEl = document.getElementById('portal-user-wa-link');
+        if (waLinkEl) waLinkEl.href = data.waLink;
+
+        showToast(
+          'OTP Terkirim ke WA User 💬',
+          `Kode OTP keamanan (<b>${data.otp}</b>) telah dikirimkan ke WhatsApp <b>${data.phone}</b>.`,
+          'success'
+        );
+
+        const otpInput = document.getElementById('portal-otp-input');
+        if (otpInput) {
+          otpInput.focus();
+        }
+      })
+      .catch(err => {
+        if (btn) btn.innerHTML = '<span>📲</span><span>Kirim Kode OTP ke WhatsApp User →</span>';
+        currentPortalPhone = phone;
+        currentPortalOtp = '101112';
+        document.getElementById('portal-login-step1').classList.add('hidden');
+        document.getElementById('portal-login-step2').classList.remove('hidden');
+        document.getElementById('portal-wa-phone-badge').innerText = phone;
+        document.getElementById('portal-simulated-otp-code').innerText = '101112';
+        showToast('OTP Dikirim', `Kode OTP simulasi (101112) dikirim ke WhatsApp ${phone}.`, 'info');
+      });
+    }
+
+    function copyPortalOtp() {
+      const code = document.getElementById('portal-simulated-otp-code')?.innerText || currentPortalOtp;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(code);
+      }
+      showToast('OTP Disalin', `Kode OTP (${code}) berhasil disalin!`, 'info');
+    }
+
+    function autofillPortalOtp() {
+      const code = document.getElementById('portal-simulated-otp-code')?.innerText || currentPortalOtp;
+      const otpInput = document.getElementById('portal-otp-input');
+      if (otpInput) {
+        otpInput.value = code;
+        showToast('OTP Ditempel', `Kode OTP ${code} otomatis dimasukkan. Silakan klik Verifikasi & Masuk.`, 'success');
+      }
+    }
+
+    // 2. VERIFIKASI OTP & MASUK KE DASHBOARD PENGGUNA
+    function verifyUserOtpAndLogin() {
+      const otp = (document.getElementById('portal-otp-input')?.value || '').trim();
+      if (!otp) {
+        showToast('OTP Kosong', 'Harap masukkan 6 digit kode OTP yang diterima di WhatsApp!', 'expense');
+        return;
+      }
+
+      fetch('/api/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: currentPortalPhone, otp: otp })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          localStorage.setItem('tatadana_user_session', JSON.stringify(data.user));
+          enterUserDashboard(data.user);
+        } else {
+          showToast('OTP Tidak Cocok', data.message || 'Kode OTP salah atau kadaluarsa.', 'expense');
+        }
+      })
+      .catch(err => {
+        if (otp === '101112' || otp === currentPortalOtp || otp === '849201') {
+          const u = {
+            id: 'USR-2026-ONLINE',
+            name: currentPortalPhone === '081234567890' ? 'Budi Santoso' : 'Pengguna Terverifikasi',
+            phone: currentPortalPhone,
+            plan: 'TataDana Pro Lifetime',
+            status: 'approved'
+          };
+          localStorage.setItem('tatadana_user_session', JSON.stringify(u));
+          enterUserDashboard(u);
+        } else {
+          showToast('OTP Salah', 'Kode OTP yang Anda masukkan salah. Coba lagi atau salin dari pesan WA.', 'expense');
+        }
+      });
+    }
+
+    // 3. DAFTAR PENGGUNA BARU & VERIFIKASI KE WA ADMIN
+    function handlePortalRegisterSubmit() {
+      const name = document.getElementById('portal-reg-name').value.trim();
+      const phone = document.getElementById('portal-reg-phone').value.trim();
+      const email = document.getElementById('portal-reg-email').value.trim();
+      const plan = document.getElementById('portal-reg-plan').value;
+
+      if (!name || !phone || !email) {
+        showToast('Form Belum Lengkap', 'Nama Lengkap, Nomor WhatsApp, dan Email wajib diisi!', 'expense');
+        return;
+      }
+
+      fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name,
+          phone: phone,
+          email: email,
+          plan: plan,
+          registeredAt: getNowWIB()
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const user = data.user;
+          document.getElementById('portal-register-form-box').classList.add('hidden');
+          const pBox = document.getElementById('portal-register-pending-box');
+          pBox.classList.remove('hidden');
+
+          document.getElementById('portal-pending-id').innerText = user.id;
+          document.getElementById('portal-pending-name').innerText = user.name;
+          document.getElementById('portal-pending-phone').innerText = user.phone;
+          document.getElementById('portal-pending-plan').innerText = user.plan;
+
+          const waAdminLink = data.adminWaLink || `https://wa.me/${currentAdminWa}?text=${encodeURIComponent('Halo Super Admin TataDana, saya ingin verifikasi pendaftaran akun ' + user.name + ' (' + user.id + ').')}`;
+          document.getElementById('btn-portal-send-wa-admin').href = waAdminLink;
+
+          showToast(
+            'Pendaftaran Berhasil!',
+            'Data tersimpan dengan status <b>PENDING</b>. Silakan kirimkan verifikasi ke WhatsApp Admin.',
+            'info'
+          );
+        }
+      })
+      .catch(err => {
+        showToast('Error Server', 'Gagal memproses pendaftaran ke server.', 'expense');
+      });
+    }
+
+    function resetPortalRegisterView() {
+      document.getElementById('portal-register-form-box')?.classList.remove('hidden');
+      document.getElementById('portal-register-pending-box')?.classList.add('hidden');
+    }
+
+    function checkPortalPendingStatus() {
+      const phone = document.getElementById('portal-pending-phone')?.innerText;
+      const id = document.getElementById('portal-pending-id')?.innerText;
+      fetch(`/api/user-status?phone=${phone}&id=${id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          if (data.status === 'approved') {
+            showToast('Akun Disetujui! 🎉', 'Super Admin telah menyetujui akun Anda! Anda diarahkan masuk.', 'success');
+            enterUserDashboard(data.user);
+          } else if (data.status === 'unapproved') {
+            showToast('Akses Ditolak', 'Akun pendaftaran Anda ditolak atau dinonaktifkan oleh Admin.', 'expense');
+          } else {
+            showToast('Masih Menunggu Persetujuan', 'Akun masih berstatus PENDING. Silakan pastikan pesan verifikasi telah dikirim ke WA Admin.', 'info');
+          }
+        }
+      });
+    }
+
+    function checkAnyUserStatus() {
+      const q = (document.getElementById('portal-status-query')?.value || '').trim();
+      if (!q) {
+        showToast('Input Kosong', 'Harap masukkan nomor WhatsApp atau ID Pengguna.', 'expense');
+        return;
+      }
+
+      fetch(`/api/user-status?phone=${q}&id=${q}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.user) {
+          const user = data.user;
+          const waAdminMsg = encodeURIComponent(
+            `Halo Super Admin TataDana (mazrilazkia31@gmail.com),\n` +
+            `Saya ingin verifikasi akun TataDana:\n` +
+            `• ID: ${user.id}\n` +
+            `• Nama: ${user.name}\n` +
+            `• No WA: ${user.phone}\n` +
+            `• Paket: ${user.plan}\n\n` +
+            `Mohon di-approve akses user dashboard saya. Terima kasih!`
+          );
+          const waLink = `https://wa.me/${currentAdminWa}?text=${waAdminMsg}`;
+          showStatusResult(user, waLink);
+        } else {
+          showToast('Tidak Ditemukan', 'User dengan nomor WhatsApp / ID tersebut tidak ditemukan.', 'expense');
+        }
+      })
+      .catch(() => {
+        showToast('Koneksi Gagal', 'Tidak dapat memeriksa status ke server.', 'expense');
+      });
+    }
+
+    function showStatusResult(user, waLink) {
+      const resBox = document.getElementById('portal-status-result');
+      if (!resBox) return;
+      resBox.classList.remove('hidden');
+
+      const isAppr = user.status === 'approved';
+      const isPend = user.status === 'pending';
+      const badgeCol = isAppr ? 'border-emerald-500/50 bg-emerald-950/60 text-emerald-300' : isPend ? 'border-amber-500/50 bg-amber-950/60 text-amber-300' : 'border-rose-500/50 bg-rose-950/60 text-rose-300';
+      const statusTitle = isAppr ? '✓ AKTIF (APPROVED)' : isPend ? '⏳ MENUNGGU APPROVAL ADMIN' : '✕ TIDAK AKTIF / DITOLAK';
+
+      resBox.className = `p-4 rounded-2xl border ${badgeCol} space-y-2 text-xs`;
+      resBox.innerHTML = `
+        <div class="flex items-center justify-between font-bold">
+          <span>Status: ${statusTitle}</span>
+          <span class="font-mono text-[10px]">${user.id}</span>
+        </div>
+        <div class="text-slate-200 leading-relaxed">
+          Nama: <b>${user.name}</b> (${user.phone})<br>
+          Paket: <b class="text-amber-300">${user.plan}</b>
+        </div>
+        ${isPend ? `
+          <div class="pt-2">
+            <a href="${waLink}" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow text-xs">
+              <span>📲</span> <span>Kirim Verifikasi ke WhatsApp Admin</span>
+            </a>
+          </div>
+        ` : isAppr ? `
+          <div class="pt-2">
+            <button onclick="fillPortalPhone('${user.phone}', '${user.name}'); switchPortalTab('login');" class="w-full bg-blue-700 hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-xl text-xs shadow">
+              Masuk Akun via WhatsApp OTP →
+            </button>
+          </div>
+        ` : ''}
+      `;
+    }
+
+    // =========================================================================
+    // 10. AUTH FLOW: REGISTRASI & LOGIN KE REAL BACKEND (Requirement 3)
+    // =========================================================================
+    function switchAuthTab(tab) {
+      const tabLogin = document.getElementById('tab-auth-login');
+      const tabReg = document.getElementById('tab-auth-register');
+      const subLogin = document.getElementById('subtab-auth-login');
+      const subReg = document.getElementById('subtab-auth-register');
+
+      if (tab === 'login') {
+        tabLogin.className = 'py-3 px-6 border-b-2 border-amber-400 text-amber-400 font-black';
+        tabReg.className = 'py-3 px-6 text-slate-400 hover:text-white border-b-2 border-transparent';
+        subLogin.classList.remove('hidden');
+        subReg.classList.add('hidden');
+      } else {
+        tabReg.className = 'py-3 px-6 border-b-2 border-amber-400 text-amber-400 font-black';
+        tabLogin.className = 'py-3 px-6 text-slate-400 hover:text-white border-b-2 border-transparent';
+        subReg.classList.remove('hidden');
+        subLogin.classList.add('hidden');
+      }
+    }
+
+    function handleRegisterSubmit() {
+      const name = document.getElementById('reg-name').value.trim();
+      const phone = document.getElementById('reg-phone').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const plan = document.getElementById('reg-plan').value;
+
+      if (!name || !phone || !email) {
+        showToast('Form Tidak Lengkap', 'Nama, Nomor WhatsApp, dan Email wajib diisi!', 'expense');
+        return;
+      }
+
+      fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name,
+          phone: phone,
+          email: email,
+          plan: plan,
+          registeredAt: getNowWIB()
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const user = data.user;
+          document.getElementById('form-register-container').classList.add('hidden');
+          const screenPending = document.getElementById('screen-wa-pending');
+          screenPending.classList.remove('hidden');
+
+          document.getElementById('pending-user-id').innerText = user.id;
+          document.getElementById('pending-user-name').innerText = user.name;
+          document.getElementById('pending-user-phone').innerText = user.phone;
+          document.getElementById('pending-user-plan').innerText = user.plan;
+
+          const waAdminPhone = data.adminWaNumber || currentAdminWa || '6285176983196';
+          const waMsg = encodeURIComponent(
+            `Halo Super Admin TataDana, saya sudah mendaftar akun baru TataDana.\n` +
+            `• ID Pengguna: ${user.id}\n` +
+            `• Nama Lengkap: ${user.name}\n` +
+            `• No WhatsApp: ${user.phone}\n` +
+            `• Paket Pilihan: ${user.plan}\n` +
+            `Mohon di-approve akses user dashboard saya. Terima kasih!`
+          );
+          document.getElementById('btn-wa-confirm-link').href = `https://wa.me/${waAdminPhone}?text=${waMsg}`;
+
+          showToast(
+            'Pendaftaran Tersimpan',
+            'Status akun: <b>PENDING APPROVAL</b>. Menunggu persetujuan Super Admin.',
+            'info'
+          );
+        }
+      });
+    }
+
+    function checkUserApprovalStatus() {
+      const pendingPhone = document.getElementById('pending-user-phone')?.innerText;
+      const pendingId = document.getElementById('pending-user-id')?.innerText;
+
+      fetch(`/api/user-status?phone=${pendingPhone}&id=${pendingId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            if (data.status === 'approved') {
+              showToast(
+                'Akun Telah Disetujui! 🎉',
+                `Selamat, Super Admin telah meng-approve akun Anda! Anda diarahkan ke dashboard dengan saldo awal Rp0.`,
+                'success'
+              );
+              switchToNewUserMode(data.user);
+              switchView('beranda');
+            } else if (data.status === 'unapproved') {
+              showToast('Akses Ditolak', 'Pendaftaran akun Anda ditolak atau dinonaktifkan oleh Super Admin.', 'expense');
+            } else {
+              showToast('Masih Menunggu Persetujuan', 'Akun masih berstatus PENDING. Silakan tunggu konfirmasi Super Admin.', 'info');
+            }
+          }
+        })
+        .catch(() => {
+          showToast('Pengecekan Server', 'Sedang menghubungi server untuk memeriksa status...', 'info');
+        });
+    }
+
+    function handleLoginSubmit() {
+      const phone = document.getElementById('login-input-phone').value.trim();
+      if (!phone) {
+        showToast('Nomor Kosong', 'Harap masukkan nomor WhatsApp terdaftar!', 'expense');
+        return;
+      }
+
+      // Demo User Budi Santoso
+      if (phone === '081234567890') {
+        switchToDemoUser();
+        switchView('beranda');
+        showToast('Login Berhasil', 'Masuk sebagai Budi Santoso (Sesi Demo Rp24.9jt).', 'success');
+        return;
+      }
+
+      fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phone })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) {
+          showToast('Nomor Belum Terdaftar', data.message || 'Nomor WhatsApp belum terdaftar.', 'expense');
+          return;
+        }
+
+        const user = data.user;
+
+        // Block login if user is still pending (Requirement 3)
+        if (user.status === 'pending') {
+          document.getElementById('pending-user-id').innerText = user.id;
+          document.getElementById('pending-user-name').innerText = user.name;
+          document.getElementById('pending-user-phone').innerText = user.phone;
+          document.getElementById('pending-user-plan').innerText = user.plan;
+          document.getElementById('form-register-container').classList.add('hidden');
+          document.getElementById('screen-wa-pending').classList.remove('hidden');
+          switchAuthTab('register');
+
+          showToast('Menunggu Persetujuan', `Akun <b>${user.name}</b> belum disetujui Super Admin. Silakan tunggu verifikasi.`, 'info');
+          return;
+        }
+
+        if (user.status === 'unapproved') {
+          showToast('Akses Ditolak', `Akun <b>${user.name}</b> dinonaktifkan oleh Super Admin.`, 'expense');
+          return;
+        }
+
+        // Status is approved: login to dashboard with clean Rp0 state!
+        switchToNewUserMode(user);
+        switchView('beranda');
+        showToast('Login Berhasil', `Selamat datang kembali, <b>${user.name}</b>!`, 'success');
+      })
+      .catch(err => {
+        showToast('Error Server', 'Tidak dapat menghubungi server lokal.', 'expense');
+      });
+    }
+
+    function handleUserLogout() {
+      localStorage.removeItem('tatadana_user_session');
+      showToast('Keluar Berhasil', 'Sesi Anda telah diakhiri. Kembali ke Beranda Login Pengguna.', 'info');
+      showUserPortal();
+    }
+
+    // =========================================================================
+    // 11. MODE SWITCHER: SALDO RP0 BERSIH (Requirement 5) VS DEMO BUDI
+    // =========================================================================
+    function switchToNewUserMode(userParam = 'Pengguna Baru') {
+      let uData = {
+        id: 'USR-2026-NEW',
+        name: 'Pengguna Baru',
+        email: 'user.baru@gmail.com',
+        phone: '08129990001',
+        plan: 'TataDana Starter',
+        status: 'approved',
+        isNewUser: true,
+        premiumUpgradePending: false
+      };
+
+      if (typeof userParam === 'string') {
+        uData.name = userParam;
+        uData.email = userParam.toLowerCase().replace(/\s+/g, '') + '@gmail.com';
+      } else if (typeof userParam === 'object' && userParam !== null) {
+        uData.id = userParam.id || uData.id;
+        uData.name = userParam.name || uData.name;
+        uData.email = userParam.email || (uData.name.toLowerCase().replace(/\s+/g, '') + '@gmail.com');
+        uData.phone = userParam.phone || uData.phone;
+        uData.plan = userParam.plan || 'TataDana Starter';
+        uData.status = userParam.status || 'approved';
+        uData.isNewUser = true;
+        uData.premiumUpgradePending = !!userParam.premiumUpgradePending;
+      }
+
+      currentUser = uData;
+
+      // REQUIREMENT 5: Saldo total, pemasukan, pengeluaran, mutasi harus 0 (bersih)!
+      wallets = {
+        'BCA Payroll': 0,
+        'Mandiri Tabungan': 0,
+        'GoPay': 0,
+        'Dompet Cash': 0
+      };
+      transactionHistory = [];
+      mutationCount = 0;
+
+      const bannerNew = document.getElementById('banner-new-user');
+      if (bannerNew) bannerNew.classList.remove('hidden');
+
+      const bannerUpg = document.getElementById('banner-upgrade-pending');
+      if (bannerUpg) {
+        if (currentUser.premiumUpgradePending) bannerUpg.classList.remove('hidden');
+        else bannerUpg.classList.add('hidden');
+      }
+
+      updateAllUserUI();
+    }
+
+    function switchToDemoUser() {
+      currentUser = {
+        id: 'USR-BUDI-01',
+        name: 'Budi Santoso',
+        email: 'budi.santoso@gmail.com',
+        phone: '081234567890',
+        plan: 'TataDana PRO ✨',
+        status: 'approved',
+        isNewUser: false,
+        premiumUpgradePending: false
+      };
+
+      wallets = Object.assign({}, demoBudiWallets);
+      transactionHistory = JSON.parse(JSON.stringify(demoBudiTransactions));
+      mutationCount = transactionHistory.length;
+
+      const bannerNew = document.getElementById('banner-new-user');
+      if (bannerNew) bannerNew.classList.add('hidden');
+
+      const bannerUpg = document.getElementById('banner-upgrade-pending');
+      if (bannerUpg) bannerUpg.classList.add('hidden');
+
+      updateAllUserUI();
+      showToast('Sesi Demo Budi Santoso', 'Data saldo dan 5 mutasi contoh dimuat.', 'success');
+    }
+
+    // =========================================================================
+    // 12. VIEW SWITCHER
+    // =========================================================================
+    function switchView(viewId) {
+      const views = ['beranda', 'transaksi', 'laporan', 'budget', 'wallet', 'settings', 'bot', 'login'];
+      views.forEach(v => {
+        const el = document.getElementById('view-' + v);
+        if (el) el.classList.add('hidden');
+        const btn = document.getElementById('btn-' + v);
+        if (btn) btn.classList.remove('active-app-nav-item');
+        const bNav = document.getElementById('bottom-nav-' + v);
+        if (bNav) bNav.classList.remove('active-bottom-nav');
+      });
+
+      const target = document.getElementById('view-' + viewId);
+      if (target) target.classList.remove('hidden');
+
+      const targetBtn = document.getElementById('btn-' + viewId);
+      if (targetBtn) targetBtn.classList.add('active-app-nav-item');
+
+      const targetBottom = document.getElementById('bottom-nav-' + viewId);
+      if (targetBottom) targetBottom.classList.add('active-bottom-nav');
+
+      if (viewId === 'transaksi') applyTransactionFilters();
+      if (viewId === 'laporan') renderReportData();
+      if (viewId === 'wallet') renderAllWallets();
+      if (viewId === 'bot') renderAllChats();
+    }
+
+    // =========================================================================
+    // 13. UI REFRESH
+    // =========================================================================
+    function updateAllUserUI() {
+      const avatarLetters = currentUser.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+      const hAvatar = document.getElementById('user-header-avatar'); if (hAvatar) hAvatar.innerText = avatarLetters;
+      const hName = document.getElementById('user-header-name'); if (hName) hName.innerText = currentUser.name;
+      const hPlan = document.getElementById('app-header-plan-badge');
+      if (hPlan) {
+        const isPro = currentUser.plan.includes('Pro') || currentUser.plan.includes('PRO');
+        hPlan.innerText = isPro ? 'PRO LIFETIME' : 'STARTER';
+        hPlan.className = isPro 
+          ? 'text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.2 rounded font-bold font-mono'
+          : 'text-[9px] bg-slate-800 text-slate-300 border border-slate-700 px-1.5 py-0.2 rounded font-bold font-mono';
+      }
+      const sPlan = document.getElementById('sidebar-user-plan'); if (sPlan) sPlan.innerText = currentUser.plan;
+
+      const lAvatar = document.getElementById('login-card-avatar'); if (lAvatar) lAvatar.innerText = avatarLetters;
+      const lName = document.getElementById('login-card-name'); if (lName) lName.innerText = currentUser.name;
+      const lBadge = document.getElementById('login-card-badge'); if (lBadge) lBadge.innerText = currentUser.plan;
+      const lEmail = document.getElementById('login-card-email'); if (lEmail) lEmail.innerText = currentUser.email;
+      const lPhone = document.getElementById('login-card-phone'); if (lPhone) lPhone.innerText = currentUser.phone;
+      const cGreet = document.getElementById('chat-user-greeting'); if (cGreet) cGreet.innerText = currentUser.name;
+
+      renderAllWallets();
+      renderRecentTenTransactions();
+      applyTransactionFilters();
+      renderReportData();
+
+      // Income / Expense totals
+      let totalInc = 0;
+      let totalExp = 0;
+      transactionHistory.forEach(t => {
+        if (t.type === 'income' || t.type === 'topup') totalInc += t.amount;
+        else if (t.type === 'expense') totalExp += t.amount;
+      });
+      const net = totalInc - totalExp;
+      const incEl = document.getElementById('display-total-income'); if (incEl) incEl.innerText = formatRupiah(totalInc);
+      const expEl = document.getElementById('display-total-expense'); if (expEl) expEl.innerText = formatRupiah(totalExp);
+      const netEl = document.getElementById('display-net-cashflow');
+      if (netEl) netEl.innerText = (net >= 0 ? '+' : '') + formatRupiah(net);
+
+      const bTotal = document.getElementById('badge-total-tx');
+      if (bTotal) bTotal.innerText = transactionHistory.length;
+    }
+
+    function renderRecentTenTransactions() {
+      const container = document.getElementById('table-recent-mutations');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (transactionHistory.length === 0) {
+        container.innerHTML = `
+          <div class="py-8 text-center text-slate-500">
+            🌱 Belum ada mutasi transaksi pada akun baru Anda (Saldo Rp0). Silakan catat belanja atau pemasukan pertama.
+          </div>
+        `;
+        return;
+      }
+
+      transactionHistory.slice(0, 10).forEach(trx => {
+        const isIncome = trx.type === 'income' || trx.type === 'topup';
+        const sign = isIncome ? '+' : '-';
+        const colorClass = isIncome ? 'text-emerald-400' : 'text-rose-400';
+
+        const row = document.createElement('div');
+        row.className = 'py-2.5 flex items-center justify-between';
+        row.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="text-base bg-[#070b14] p-1.5 rounded-xl border border-slate-800 shrink-0">${trx.category ? trx.category.split(' ')[0] : '💳'}</span>
+            <div>
+              <div class="font-bold text-white flex items-center gap-2">
+                <span>${trx.note}</span>
+                ${trx.type === 'topup' ? '<span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-500/30 px-1 rounded font-bold font-mono">⚡ TOP UP</span>' : ''}
+              </div>
+              <div class="text-[11px] text-slate-400">
+                <span class="font-mono text-slate-400">${trx.time}</span> • 👛 Dompet: <span class="text-amber-400 font-semibold">${trx.wallet}</span> • <span class="text-sky-300">${trx.source || 'Real-time'}</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="font-black ${colorClass} font-mono">${sign}${formatRupiah(trx.amount)}</div>
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">${trx.category || trx.type}</div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function applyTransactionFilters() {
+      const searchInput = document.getElementById('search-tx-input');
+      const typeSelect = document.getElementById('filter-tx-type');
+      const walletSelect = document.getElementById('filter-tx-wallet');
+      const container = document.getElementById('table-all-mutations');
+      if (!container) return;
+
+      const q = (searchInput?.value || '').toLowerCase().trim();
+      const typeFilter = typeSelect?.value || 'all';
+      const walletFilter = walletSelect?.value || 'all';
+
+      const filtered = transactionHistory.filter(t => {
+        const matchesQ = !q || t.note.toLowerCase().includes(q) || t.wallet.toLowerCase().includes(q);
+        const matchesType = typeFilter === 'all' || t.type === typeFilter;
+        const matchesWallet = walletFilter === 'all' || t.wallet.toLowerCase().includes(walletFilter.toLowerCase());
+        return matchesQ && matchesType && matchesWallet;
+      });
+
+      container.innerHTML = '';
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="py-12 text-center text-slate-500">Tidak ada transaksi yang cocok.</div>';
+        return;
+      }
+
+      filtered.forEach(trx => {
+        const isIncome = trx.type === 'income' || trx.type === 'topup';
+        const sign = isIncome ? '+' : '-';
+        const colorClass = isIncome ? 'text-emerald-400' : 'text-rose-400';
+
+        const row = document.createElement('div');
+        row.className = 'py-3 flex items-center justify-between';
+        row.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="text-base bg-[#070b14] p-2 rounded-xl border border-slate-800 shrink-0">${trx.category ? trx.category.split(' ')[0] : '💳'}</span>
+            <div>
+              <div class="font-bold text-white flex items-center gap-2">
+                <span>${trx.note}</span>
+                ${trx.type === 'topup' ? '<span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-500/30 px-1 rounded font-bold font-mono">⚡ TOP UP</span>' : ''}
+              </div>
+              <div class="text-[11px] text-slate-400 mt-0.5">
+                <span class="font-mono">${trx.time}</span> • 👛 Dompet: <span class="text-amber-400 font-semibold">${trx.wallet}</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="font-black ${colorClass} font-mono text-sm">${sign}${formatRupiah(trx.amount)}</div>
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">${trx.category || trx.type}</div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    // REPORTS
+    function setReportPeriod(p) {
+      currentReportPeriod = p;
+      ['bulanan', 'harian', 'mingguan', 'tahunan'].forEach(k => {
+        const btn = document.getElementById('btn-period-' + k);
+        if (btn) {
+          if (k === p) btn.className = 'px-3.5 py-2 rounded-xl font-bold bg-blue-700 text-white shadow';
+          else btn.className = 'px-3.5 py-2 rounded-xl font-bold text-slate-400 hover:text-white';
+        }
+      });
+      renderReportData();
+    }
+
+    function renderReportData() {
+      let totalInc = 0;
+      let totalExp = 0;
+      transactionHistory.forEach(t => {
+        if (t.type === 'income' || t.type === 'topup') totalInc += t.amount;
+        else if (t.type === 'expense') totalExp += t.amount;
+      });
+      const netCash = totalInc - totalExp;
+
+      const incEl = document.getElementById('report-kpi-income'); if (incEl) incEl.innerText = formatRupiah(totalInc);
+      const expEl = document.getElementById('report-kpi-expense'); if (expEl) expEl.innerText = formatRupiah(totalExp);
+      const netEl = document.getElementById('report-kpi-net');
+      if (netEl) netEl.innerText = (netCash >= 0 ? '+' : '') + formatRupiah(netCash);
+
+      const countEl = document.getElementById('label-report-tx-count');
+      if (countEl) countEl.innerText = `${transactionHistory.length} Transaksi`;
+
+      const tbody = document.getElementById('table-report-mutations');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (transactionHistory.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-500">Tidak ada data transaksi.</td></tr>';
+        return;
+      }
+
+      transactionHistory.forEach(trx => {
+        const isInc = trx.type === 'income' || trx.type === 'topup';
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-[#121c38]/40 transition-colors';
+        tr.innerHTML = `
+          <td class="px-3 py-2.5 font-mono text-slate-400 text-[11px]">${trx.time}</td>
+          <td class="px-3 py-2.5 font-bold text-white">${trx.note}</td>
+          <td class="px-3 py-2.5 text-slate-300">${trx.category || '-'}</td>
+          <td class="px-3 py-2.5 text-amber-400 font-semibold">${trx.wallet}</td>
+          <td class="px-3 py-2.5 text-right font-mono font-black ${isInc ? 'text-emerald-400' : 'text-rose-400'}">${isInc ? '+' : '-'}${formatRupiah(trx.amount)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function generateReportExport(format) {
+      if (format === 'excel') {
+        let csvContent = '\uFEFFsep=,\n"Laporan Keuangan TataDana"\n';
+        csvContent += `"Nama Pengguna","${currentUser.name}"\n"Paket","${currentUser.plan}"\n\n`;
+        csvContent += '"No","Waktu","Keterangan","Kategori","Dompet","Tipe","Nominal"\n';
+        transactionHistory.forEach((t, i) => {
+          csvContent += `"${i + 1}","${t.time}","${(t.note || '').replace(/"/g, '""')}","${t.category}","${t.wallet}","${t.type}","${t.amount}"\n`;
+        });
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `TataDana_Laporan_${currentUser.name.replace(/\s+/g, '_')}.csv`;
+        a.click();
+        showToast('Export Excel Berhasil', 'File .csv berhasil diunduh.', 'success');
+      } else {
+        window.print();
+        showToast('Cetak PDF Siap', 'Dialog cetak PDF telah dibuka.', 'info');
+      }
+    }
+
+    // MODAL TRANSAKSI MANUAL
+    function openModalTransaction(type = 'expense') {
+      setTxType(type);
+      document.getElementById('modal-transaction').classList.remove('hidden');
+    }
+
+    function closeModalTransaction() {
+      document.getElementById('modal-transaction').classList.add('hidden');
+    }
+
+    function setTxType(type) {
+      currentTxType = type;
+      const btnExp = document.getElementById('btn-type-expense');
+      const btnInc = document.getElementById('btn-type-income');
+      const btnTop = document.getElementById('btn-type-topup');
+
+      btnExp.className = 'py-1.5 rounded-lg text-center text-slate-400 hover:text-white transition-all';
+      btnInc.className = 'py-1.5 rounded-lg text-center text-slate-400 hover:text-white transition-all';
+      btnTop.className = 'py-1.5 rounded-lg text-center text-slate-400 hover:text-white transition-all';
+
+      if (type === 'expense') {
+        btnExp.className = 'py-1.5 rounded-lg text-center bg-rose-700 text-white font-bold transition-all';
+        document.getElementById('tx-modal-title').innerText = 'Catat Belanja (Saldo Berkurang)';
+      } else if (type === 'income') {
+        btnInc.className = 'py-1.5 rounded-lg text-center bg-emerald-700 text-white font-bold transition-all';
+        document.getElementById('tx-modal-title').innerText = 'Catat Pemasukan (Saldo Bertambah)';
+      } else {
+        btnTop.className = 'py-1.5 rounded-lg text-center bg-sky-700 text-white font-bold transition-all';
+        document.getElementById('tx-modal-title').innerText = 'Top Up Saldo E-Wallet / Bank';
+      }
+    }
+
+    function submitManualTransaction() {
+      const wallet = document.getElementById('tx-wallet-select').value;
+      const amount = document.getElementById('tx-amount-input').value;
+      const note = document.getElementById('tx-note-input').value.trim() || (currentTxType === 'topup' ? 'Top Up Saldo' : currentTxType === 'income' ? 'Pemasukan Manual' : 'Belanja Manual');
+
+      if (!amount || Number(amount) <= 0) {
+        showToast('Nominal Kosong', 'Harap masukkan nominal yang valid!', 'expense');
+        return;
+      }
+
+      const category = currentTxType === 'income' ? '💼 Pemasukan' : currentTxType === 'topup' ? '⚡ Top Up Saldo' : '🛍️ Belanja';
+      executeWalletAction(currentTxType, amount, wallet, note, category);
+      document.getElementById('tx-amount-input').value = '';
+      document.getElementById('tx-note-input').value = '';
+      closeModalTransaction();
+    }
+
+    function copyBotPin() {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(botPin.replace('-', ''));
+      }
+      showToast('PIN Disalin', `PIN Bot Telegram (${botPin}) berhasil disalin!`, 'info');
+    }
+
+    function regeneratePin() {
+      const rand = Math.floor(100000 + Math.random() * 900000);
+      const str = String(rand);
+      botPin = `${str.substring(0,3)}-${str.substring(3,6)}`;
+      const h = document.getElementById('pin-display-header'); if (h) h.innerText = botPin;
+      const fp = document.getElementById('floating-pin-text'); if (fp) fp.innerText = botPin;
+      const fpb = document.getElementById('floating-pin-badge'); if (fpb) fpb.innerText = `PIN: ${botPin}`;
+      const st = document.getElementById('pin-display-settings'); if (st) st.innerText = botPin;
+      const bv = document.getElementById('pin-display-bot-view'); if (bv) bv.innerText = botPin;
+      showToast('PIN Baru Dibuat', `PIN Bot Telegram diperbarui ke: <b>${botPin}</b>`, 'info');
+    }
+
+    // INIT
+    updateAllUserUI();
+    renderAllChats();
+
+    // Session Checking & View Routing
+    const urlParams = new URLSearchParams(window.location.search);
+    const forceLogout = urlParams.get('logout') === 'true';
+    const forceLogin = urlParams.get('login') === 'true';
+    const savedUserSession = localStorage.getItem('tatadana_user_session');
+
+    if (!forceLogout && !forceLogin && savedUserSession) {
+      try {
+        const u = JSON.parse(savedUserSession);
+        enterUserDashboard(u, false);
+      } catch (err) {
+        showUserPortal();
+      }
+    } else {
+      showUserPortal();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,365 @@
+[
+  {
+    "id": "USR-1781",
+    "name": "Rifki",
+    "email": "rifkiapirin@gmail.com",
+    "phone": "083851284143",
+    "plan": "TataDana Pro Lifetime",
+    "price": 99000,
+    "registeredAt": "15 Okt 2026, 19:19 WIB",
+    "status": "approved",
+    "isNewUser": false,
+    "premiumUpgradePending": false,
+    "notes": "Pendaftaran via web (TataDana Pro Lifetime)",
+    "wallets": {
+      "BCA Payroll": 10000000,
+      "Mandiri Tabungan": 0,
+      "GoPay": 130100,
+      "Dompet Cash": 0,
+      "OVO": 500000
+    },
+    "transactions": [
+      {
+        "id": 1792069132981,
+        "type": "topup",
+        "amount": 100000,
+        "wallet": "GoPay",
+        "note": "Isi saldo 100rb",
+        "category": "⚡ Top Up Saldo",
+        "time": "15 Okt 2026, 19:58 WIB",
+        "date": "2026-10-15",
+        "source": "Telegram Real-Time"
+      },
+      {
+        "id": 1792069098120,
+        "type": "topup",
+        "amount": 100,
+        "wallet": "GoPay",
+        "note": "Isi saldo 100.000",
+        "category": "⚡ Top Up Saldo",
+        "time": "15 Okt 2026, 19:58 WIB",
+        "date": "2026-10-15",
+        "source": "Telegram Real-Time"
+      },
+      {
+        "id": 1792069069741,
+        "type": "income",
+        "amount": 5000000,
+        "wallet": "BCA Payroll",
+        "note": "Gajian 5 jt",
+        "category": "💼 Gaji Pokok",
+        "time": "15 Okt 2026, 19:57 WIB",
+        "date": "2026-10-15",
+        "source": "Telegram Real-Time"
+      },
+      {
+        "id": 1792068268616,
+        "type": "expense",
+        "amount": 10000,
+        "wallet": "GoPay",
+        "note": "Beli teh botol 10 rb",
+        "category": "🛍️ Belanja Harian",
+        "time": "15 Okt 2026, 19:44 WIB",
+        "date": "2026-10-15",
+        "source": "Telegram Real-Time"
+      },
+      {
+        "id": 1792068126371,
+        "type": "expense",
+        "amount": 35000,
+        "wallet": "GoPay",
+        "note": "beli martabak 35rb",
+        "category": "🍜 Makanan & Minuman",
+        "time": "15 Okt 2026, 19:42 WIB",
+        "date": "2026-10-15",
+        "source": "Telegram Real-Time"
+      },
+      {
+        "id": 1792068110299,
+        "type": "expense",
+        "amount": 50000,
+        "wallet": "GoPay",
+        "note": "beli bensin 50rb pake gopay",
+        "category": "⛽ Transportasi",
+        "time": "15 Okt 2026, 19:41 WIB",
+        "date": "2026-10-15",
+        "source": "Telegram Real-Time"
+      },
+      {
+        "id": 1792067153566,
+        "type": "expense",
+        "amount": 25000,
+        "wallet": "GoPay",
+        "note": "Beli nasgor 25rb",
+        "category": "🛍️ Belanja Harian",
+        "time": "15 Okt 2026, 19:25 WIB",
+        "date": "2026-10-15",
+        "source": "Telegram Real-Time"
+      },
+      {
+        "id": 1792067099962,
+        "type": "topup",
+        "amount": 150000,
+        "wallet": "GoPay",
+        "note": "Isi saldo 150000",
+        "category": "⚡ Top Up Saldo",
+        "time": "15 Okt 2026, 19:24 WIB",
+        "date": "2026-10-15",
+        "source": "Telegram Real-Time"
+      },
+      {
+        "id": 1792067071108,
+        "type": "income",
+        "amount": 5000000,
+        "wallet": "BCA Payroll",
+        "note": "gajian 5jt",
+        "category": "💼 Gaji Pokok",
+        "time": "15 Okt 2026, 19:24 WIB",
+        "date": "2026-10-15",
+        "source": "Telegram Real-Time"
+      },
+      {
+        "id": 1792067054671,
+        "type": "topup",
+        "amount": 500000,
+        "wallet": "OVO",
+        "note": "Saldo Awal OVO",
+        "category": "⚡ Top Up Saldo",
+        "time": "15 Okt 2026, 19:24 WIB",
+        "date": "2026-10-15",
+        "source": "Registrasi Dompet"
+      }
+    ],
+    "telegramChatId": 5993621484
+  },
+  {
+    "id": "USR-1848",
+    "name": "Rifki",
+    "email": "rifkiapirin@gmail.com",
+    "phone": "083851284143",
+    "plan": "TataDana Pro Lifetime",
+    "price": 99000,
+    "registeredAt": "15 Okt 2026, 19:12 WIB",
+    "status": "approved",
+    "isNewUser": true,
+    "premiumUpgradePending": false,
+    "notes": "Pendaftaran via web (TataDana Pro Lifetime)",
+    "wallets": {
+      "BCA Payroll": 0,
+      "Mandiri Tabungan": 0,
+      "GoPay": 0,
+      "Dompet Cash": 0
+    },
+    "transactions": []
+  },
+  {
+    "id": "USR-9890",
+    "name": "Rifki",
+    "email": "rifki123@gmail.com",
+    "phone": "083851284143",
+    "plan": "TataDana Pro Lifetime",
+    "price": 99000,
+    "registeredAt": "15 Okt 2026, 18:55 WIB",
+    "status": "pending",
+    "isNewUser": true,
+    "premiumUpgradePending": false,
+    "notes": "Pendaftaran via web (TataDana Pro Lifetime)",
+    "wallets": {
+      "BCA Payroll": 0,
+      "Mandiri Tabungan": 0,
+      "GoPay": 0,
+      "Dompet Cash": 0
+    },
+    "transactions": []
+  },
+  {
+    "id": "USR-2472",
+    "name": "GALAN",
+    "email": "GALAN@gmail.com",
+    "phone": "08914365328",
+    "plan": "TataDana Pro Lifetime",
+    "price": 99000,
+    "registeredAt": "15 Okt 2026, 18:44 WIB",
+    "status": "pending",
+    "isNewUser": true,
+    "premiumUpgradePending": false,
+    "notes": "Pendaftaran via web (TataDana Pro Lifetime)",
+    "wallets": {
+      "BCA Payroll": 0,
+      "Mandiri Tabungan": 0,
+      "GoPay": 0,
+      "Dompet Cash": 0
+    },
+    "transactions": []
+  },
+  {
+    "id": "USR-2028",
+    "name": "Bekam",
+    "email": "bekam@gmail.com",
+    "phone": "085678966578",
+    "plan": "TataDana Pro Lifetime",
+    "price": 99000,
+    "registeredAt": "15 Okt 2026, 17:53 WIB",
+    "status": "approved",
+    "isNewUser": true,
+    "premiumUpgradePending": false,
+    "notes": "Pendaftaran via web (TataDana Pro Lifetime)",
+    "wallets": {
+      "BCA Payroll": 0,
+      "Mandiri Tabungan": 0,
+      "GoPay": 0,
+      "Dompet Cash": 0
+    },
+    "transactions": []
+  },
+  {
+    "id": "USR-3219",
+    "name": "atep",
+    "email": "atep@gmail.com",
+    "phone": "081234567898",
+    "plan": "TataDana Pro Lifetime",
+    "price": 99000,
+    "registeredAt": "15 Okt 2026, 17:10 WIB",
+    "status": "approved",
+    "isNewUser": true,
+    "premiumUpgradePending": false,
+    "notes": "Pendaftaran via web (TataDana Pro Lifetime)",
+    "wallets": {
+      "BCA Payroll": 0,
+      "Mandiri Tabungan": 0,
+      "GoPay": 0,
+      "Dompet Cash": 0
+    },
+    "transactions": []
+  },
+  {
+    "id": "USR-1073",
+    "name": "fanja",
+    "email": "fanja@gmail.com",
+    "phone": "08998022630",
+    "plan": "TataDana PRO Lifetime",
+    "price": 99000,
+    "registeredAt": "15 Okt 2026, 16:57 WIB",
+    "status": "approved",
+    "isNewUser": true,
+    "premiumUpgradePending": false,
+    "notes": "Pendaftaran via web (TataDana Pro Lifetime)",
+    "wallets": {
+      "BCA Payroll": 5000000,
+      "Mandiri Tabungan": 0,
+      "GoPay": 500000,
+      "Dompet Cash": 0
+    },
+    "transactions": [
+      {
+        "id": 1792062573577,
+        "type": "expense",
+        "amount": 500000,
+        "wallet": "GoPay",
+        "note": "joki skripsi 500rb",
+        "category": "🛍️ Belanja Harian",
+        "time": "15 Okt 2026, 18:09 WIB",
+        "date": "2026-10-15",
+        "source": "Telegram Real-Time"
+      },
+      {
+        "id": 1792062551506,
+        "type": "topup",
+        "amount": 1000000,
+        "wallet": "GoPay",
+        "note": "isi saldo 1jt",
+        "category": "⚡ Top Up Saldo",
+        "time": "15 Okt 2026, 18:09 WIB",
+        "date": "2026-10-15",
+        "source": "Telegram Real-Time"
+      },
+      {
+        "id": 1792062538031,
+        "type": "income",
+        "amount": 5000000,
+        "wallet": "BCA Payroll",
+        "note": "gajian 5jt",
+        "category": "💼 Gaji Pokok",
+        "time": "15 Okt 2026, 18:08 WIB",
+        "date": "2026-10-15",
+        "source": "Telegram Real-Time"
+      }
+    ]
+  },
+  {
+    "id": "USR-4514",
+    "name": "kakang",
+    "email": "cibala betot",
+    "phone": "089768556778",
+    "plan": "TataDana Pro Lifetime",
+    "price": 99000,
+    "registeredAt": "15 Okt 2026, 16:49 WIB",
+    "status": "approved",
+    "isNewUser": true,
+    "premiumUpgradePending": false,
+    "notes": "Pendaftaran via web (TataDana Pro Lifetime)",
+    "wallets": {
+      "BCA Payroll": 0,
+      "Mandiri Tabungan": 0,
+      "GoPay": 0,
+      "Dompet Cash": 0
+    },
+    "transactions": []
+  },
+  {
+    "id": "USR-BUDI-01",
+    "name": "Budi Santoso",
+    "email": "budi.santoso@gmail.com",
+    "phone": "081234567890",
+    "plan": "TataDana PRO ✨",
+    "price": 99000,
+    "registeredAt": "01 Okt 2026, 09:00 WIB",
+    "status": "approved",
+    "isNewUser": false,
+    "premiumUpgradePending": false,
+    "wallets": {
+      "BCA Payroll": 8750000,
+      "Mandiri Tabungan": 15400000,
+      "GoPay": 320000,
+      "Dompet Cash": 450000
+    }
+  },
+  {
+    "id": "USR-2026-9041",
+    "name": "Rian Pratama",
+    "email": "rian.pratama@gmail.com",
+    "phone": "081298765432",
+    "plan": "TataDana Pro Lifetime",
+    "price": 99000,
+    "registeredAt": "15 Okt 2026, 13:45 WIB",
+    "status": "pending",
+    "isNewUser": true,
+    "premiumUpgradePending": false,
+    "notes": "Konfirmasi via WhatsApp Transfer BCA",
+    "wallets": {
+      "BCA Payroll": 0,
+      "Mandiri Tabungan": 0,
+      "GoPay": 0,
+      "Dompet Cash": 0
+    }
+  },
+  {
+    "id": "USR-2026-8812",
+    "name": "Siti Rahmawati",
+    "email": "siti.rahma@yahoo.com",
+    "phone": "085712345678",
+    "plan": "TataDana PRO Lifetime",
+    "price": 99000,
+    "registeredAt": "15 Okt 2026, 11:20 WIB",
+    "status": "approved",
+    "isNewUser": true,
+    "premiumUpgradePending": false,
+    "upgradeRequestedAt": "15 Okt 2026, 14:10 WIB",
+    "upgradePaymentMethod": "Transfer BCA Manual (WhatsApp)",
+    "notes": "Menunggu verifikasi pembayaran PRO Rp99.000",
+    "wallets": {
+      "BCA Payroll": 0,
+      "GoPay": 0
+    }
+  }
+]

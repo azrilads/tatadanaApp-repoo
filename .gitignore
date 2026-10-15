@@ -1,0 +1,19 @@
+# Node modules & builds
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Logs & scratch
+*.log
+scratch/
+tunnel_*.txt
+test_write.txt
+
+# Environment variables
+.env*.local
+
+# OS files
+.DS_Store
+Thumbs.db
