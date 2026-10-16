@@ -1,5 +1,81 @@
 [
   {
+    "id": "USR-4248",
+    "name": "fahrul",
+    "email": "fahrul@gmail.com",
+    "phone": "085798230868",
+    "plan": "TataDana Pro Lifetime",
+    "price": 99000,
+    "registeredAt": "15 Okt 2026, 14:28 WIB",
+    "registeredTimestamp": 1792135689636,
+    "status": "approved",
+    "isNewUser": true,
+    "premiumUpgradePending": false,
+    "notes": "Pendaftaran via web (TataDana Pro Lifetime)",
+    "wallets": {
+      "BCA Payroll": 4450000,
+      "Mandiri Tabungan": 0,
+      "GoPay": 750000,
+      "Dompet Cash": 0
+    },
+    "transactions": [
+      {
+        "id": 1792136222603,
+        "type": "expense",
+        "amount": 550000,
+        "wallet": "BCA Payroll",
+        "note": "bayar tes toepel 550rb",
+        "category": "🛍️ Belanja Harian",
+        "time": "15 Okt 2026, 14:37 WIB",
+        "date": "2026-10-15",
+        "source": "Telegram Real-Time"
+      },
+      {
+        "id": 1792135970781,
+        "type": "topup",
+        "amount": 750000,
+        "wallet": "GoPay",
+        "note": "isi saldo 750rb",
+        "category": "⚡ Top Up Saldo",
+        "time": "15 Okt 2026, 14:32 WIB",
+        "date": "2026-10-15",
+        "source": "Telegram Real-Time"
+      },
+      {
+        "id": 1792135814409,
+        "type": "income",
+        "amount": 5000000,
+        "wallet": "BCA Payroll",
+        "note": "gajian 5jt",
+        "category": "💼 Gaji Pokok",
+        "time": "15 Okt 2026, 14:30 WIB",
+        "date": "2026-10-15",
+        "source": "Telegram Real-Time"
+      }
+    ]
+  },
+  {
+    "id": "USR-9432",
+    "name": "Test Pendaftar Realtime",
+    "email": "test.realtime@tatadana.id",
+    "phone": "089912345678",
+    "plan": "TataDana Pro Lifetime",
+    "price": 99000,
+    "registeredAt": "16/10/2026, 14.24.55",
+    "registeredTimestamp": 1792135496408,
+    "status": "approved",
+    "isNewUser": true,
+    "premiumUpgradePending": false,
+    "notes": "Pendaftaran via web (TataDana Pro Lifetime)",
+    "wallets": {
+      "BCA Payroll": 0,
+      "Mandiri Tabungan": 0,
+      "GoPay": 0,
+      "Dompet Cash": 0
+    },
+    "transactions": []
+  },
+  {
     "id": "USR-1781",
     "name": "Rifki",
     "email": "rifkiapirin@gmail.com",
@@ -12,13 +88,24 @@
     "premiumUpgradePending": false,
     "notes": "Pendaftaran via web (TataDana Pro Lifetime)",
     "wallets": {
-      "BCA Payroll": 10000000,
+      "BCA Payroll": 9985000,
       "Mandiri Tabungan": 0,
       "GoPay": 130100,
       "Dompet Cash": 0,
       "OVO": 500000
     },
     "transactions": [
+      {
+        "id": 1792136924506,
+        "type": "expense",
+        "amount": 15000,
+        "wallet": "BCA Payroll",
+        "note": "beli bakso 15rb",
+        "category": "🍜 Makanan & Minuman",
+        "time": "16 Okt 2026, 14:48 WIB",
+        "date": "2026-10-16",
+        "source": "Telegram Real-Time"
+      },
       {
         "id": 1792069132981,
         "type": "topup",
@@ -130,47 +217,7 @@
         "source": "Registrasi Dompet"
       }
     ],
-    "telegramChatId": 5993621484
-  },
-  {
-    "id": "USR-1848",
-    "name": "Rifki",
-    "email": "rifkiapirin@gmail.com",
-    "phone": "083851284143",
-    "plan": "TataDana Pro Lifetime",
-    "price": 99000,
-    "registeredAt": "15 Okt 2026, 19:12 WIB",
-    "status": "approved",
-    "isNewUser": true,
-    "premiumUpgradePending": false,
-    "notes": "Pendaftaran via web (TataDana Pro Lifetime)",
-    "wallets": {
-      "BCA Payroll": 0,
-      "Mandiri Tabungan": 0,
-      "GoPay": 0,
-      "Dompet Cash": 0
-    },
-    "transactions": []
-  },
-  {
-    "id": "USR-9890",
-    "name": "Rifki",
-    "email": "rifki123@gmail.com",
-    "phone": "083851284143",
-    "plan": "TataDana Pro Lifetime",
-    "price": 99000,
-    "registeredAt": "15 Okt 2026, 18:55 WIB",
-    "status": "pending",
-    "isNewUser": true,
-    "premiumUpgradePending": false,
-    "notes": "Pendaftaran via web (TataDana Pro Lifetime)",
-    "wallets": {
-      "BCA Payroll": 0,
-      "Mandiri Tabungan": 0,
-      "GoPay": 0,
-      "Dompet Cash": 0
-    },
-    "transactions": []
+    "telegramChatId": 7684869990
   },
   {
     "id": "USR-2472",

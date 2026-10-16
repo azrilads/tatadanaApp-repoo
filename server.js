@@ -155,6 +155,51 @@ function getTodayYMDServer() {
   return `${yr}-${mo}-${day}`;
 }
 
+// Escape special Telegram Markdown characters to prevent 400 Bad Request
+function escapeMarkdown(str) {
+  if (!str) return '';
+  return String(str).replace(/([_*`\[\]])/g, '\\$1');
+}
+
+// User lookup helper with smart prioritization (resolves duplicates and legacy sessions)
+function findUserByQuery(users, { id, phone, chatId } = {}) {
+  if (!Array.isArray(users)) return null;
+
+  if (chatId) {
+    const byChat = users.find(u => u.telegramChatId == chatId);
+    if (byChat) return byChat;
+  }
+  if (id) {
+    const byId = users.find(u => u.id === id);
+    if (byId) return byId;
+  }
+  if (phone) {
+    const clean = phone.replace(/\D/g, '');
+    const cleanStandard = clean.startsWith('62') ? '0' + clean.slice(2) : clean;
+    const clean62 = clean.startsWith('0') ? '62' + clean.slice(1) : clean;
+
+    const matchedUsers = users.filter(u => {
+      const uPhone = (u.phone || '').replace(/\D/g, '');
+      const uStandard = uPhone.startsWith('62') ? '0' + uPhone.slice(2) : uPhone;
+      return uPhone === clean || uPhone === cleanStandard || uPhone === clean62 || uStandard === cleanStandard;
+    });
+
+    if (matchedUsers.length > 0) {
+      matchedUsers.sort((a, b) => {
+        const aScore = (a.status === 'approved' ? 10 : 0) +
+                       ((a.transactions && a.transactions.length > 0) ? 5 : 0) +
+                       (a.telegramChatId ? 3 : 0);
+        const bScore = (b.status === 'approved' ? 10 : 0) +
+                       ((b.transactions && b.transactions.length > 0) ? 5 : 0) +
+                       (b.telegramChatId ? 3 : 0);
+        return bScore - aScore;
+      });
+      return matchedUsers[0];
+    }
+  }
+  return null;
+}
+
 // Telegram HTTPS API Request
 function telegramApiRequest(method, payload) {
   return new Promise((resolve) => {
@@ -178,8 +223,11 @@ function telegramApiRequest(method, payload) {
         try { resolve(JSON.parse(data)); } catch (e) { resolve(null); }
       });
     });
+    req.setTimeout(35000, () => {
+      req.destroy(new Error('Telegram request timeout'));
+    });
     req.on('error', (err) => {
-      console.error('Telegram API error:', err.message);
+      console.error(`Telegram API error (${method}):`, err.message);
       resolve(null);
     });
     req.write(postData);
@@ -187,7 +235,7 @@ function telegramApiRequest(method, payload) {
   });
 }
 
-function sendTelegramMessage(chatId, text, inlineKeyboard) {
+async function sendTelegramMessage(chatId, text, inlineKeyboard) {
   const payload = {
     chat_id: chatId,
     text: text,
@@ -196,7 +244,19 @@ function sendTelegramMessage(chatId, text, inlineKeyboard) {
   if (inlineKeyboard && inlineKeyboard.length > 0) {
     payload.reply_markup = { inline_keyboard: inlineKeyboard };
   }
-  return telegramApiRequest('sendMessage', payload);
+  let res = await telegramApiRequest('sendMessage', payload);
+  if (!res || !res.ok) {
+    console.warn('[Telegram Bot] Markdown sendMessage failed, retrying plain text:', res ? res.description : 'no response');
+    const plainPayload = {
+      chat_id: chatId,
+      text: text.replace(/[*_`\[\]]/g, '')
+    };
+    if (inlineKeyboard && inlineKeyboard.length > 0) {
+      plainPayload.reply_markup = { inline_keyboard: inlineKeyboard };
+    }
+    res = await telegramApiRequest('sendMessage', plainPayload);
+  }
+  return res;
 }
 
 function answerTelegramCallback(callbackQueryId, text) {
@@ -211,7 +271,7 @@ async function processTelegramTextMessage(chatId, rawText, forceUserId) {
   const lower = text.toLowerCase();
   const users = readDb();
 
-  // Cari user
+  // 1. Cari user yang sudah terhubung dengan chatId ini
   let user = null;
   if (forceUserId) {
     user = users.find(u => u.id === forceUserId);
@@ -220,7 +280,97 @@ async function processTelegramTextMessage(chatId, rawText, forceUserId) {
     user = users.find(u => u.telegramChatId == chatId);
   }
 
-  // Handle perintah Pairing: /pair <identifier> atau /login <identifier>
+  // 2. Handle /start (baik dengan parameter pairing maupun tanpa parameter)
+  if (lower.startsWith('/start')) {
+    const parts = text.split(/\s+/);
+    const arg = (parts[1] || '').trim();
+    const cleanArg = arg.replace(/^pair_?/i, '').trim();
+
+    // Jika ada parameter payload: misal /start pair_083851284143 atau /start 849201
+    if (cleanArg) {
+      let matched = findUserByQuery(users, { phone: cleanArg, id: cleanArg });
+      if (!matched && (cleanArg === '849201' || cleanArg === '101112')) {
+        matched = user || users.find(u => u.status === 'approved' && u.transactions && u.transactions.length > 0) || users.find(u => u.status === 'approved') || users[0];
+      }
+      if (matched) {
+        matched.telegramChatId = chatId;
+        writeDb(users);
+        user = matched;
+
+        let listDompet = '';
+        let totalAll = 0;
+        if (!user.wallets || Object.keys(user.wallets).length === 0) {
+          user.wallets = { 'BCA Payroll': 0, 'Mandiri Tabungan': 0, 'GoPay': 0, 'Dompet Cash': 0 };
+        }
+        for (const w of Object.keys(user.wallets)) {
+          const bal = user.wallets[w] || 0;
+          totalAll += bal;
+          listDompet += `├ 👛 ${w} : *${formatRupiahServer(bal)}*\n`;
+        }
+
+        const msg = `🎉 *Pairing Berhasil!*\n\n` +
+          `Selamat datang, *${escapeMarkdown(matched.name)}*!\n` +
+          `Akun TataDana Anda (*${matched.phone}* | ${escapeMarkdown(matched.plan)}) telah resmi terhubung dengan Telegram ini.\n\n` +
+          `👛 *Saldo Real-Time Semua Dompet Anda:*\n` +
+          `${listDompet}` +
+          `└ 💰 *Total Aset : ${formatRupiahServer(totalAll)}*\n\n` +
+          `Sekarang Anda dapat langsung mencatat transaksi lewat chat ini:\n` +
+          `• \`beli bakso 25rb\`\n` +
+          `• \`gajian 5jt\`\n` +
+          `• \`beli bensin 50rb pake gopay\`\n` +
+          `• \`/saldo\` untuk cek rincian saldo dompet\n\n` +
+          `✨ *Real-Time:* Mutasi otomatis memotong dompet pilihan Anda dan 100% sinkron ke dashboard web Anda seketika!`;
+        await sendTelegramMessage(chatId, msg);
+        return { reply: msg, user: matched };
+      }
+    }
+
+    // Jika /start tanpa payload tapi user sudah terhubung sebelumnya:
+    if (user) {
+      let listDompet = '';
+      let totalAll = 0;
+      if (!user.wallets || Object.keys(user.wallets).length === 0) {
+        user.wallets = { 'BCA Payroll': 0, 'Mandiri Tabungan': 0, 'GoPay': 0, 'Dompet Cash': 0 };
+      }
+      for (const w of Object.keys(user.wallets)) {
+        const bal = user.wallets[w] || 0;
+        totalAll += bal;
+        listDompet += `├ 👛 ${w} : *${formatRupiahServer(bal)}*\n`;
+      }
+      const msg = `🤖 *TataDana FinBot Telegram Hub*\n\n` +
+        `Halo *${escapeMarkdown(user.name)}*! Akun Anda terhubung dengan TataDana (*${escapeMarkdown(user.plan)}*).\n` +
+        `📱 No HP: \`${user.phone}\`\n\n` +
+        `👛 *Saldo Real-Time Semua Dompet Anda:*\n` +
+        `${listDompet}` +
+        `└ 💰 *Total Aset : ${formatRupiahServer(totalAll)}*\n\n` +
+        `📊 *Cara Cepat Mencatat Keuangan:*\n` +
+        `• Pengeluaran: \`beli bakso 25rb\` atau \`bensin 50rb pake gopay\`\n` +
+        `• Pemasukan: \`gajian 5jt\` atau \`topup gopay 100rb\`\n` +
+        `• Cek Saldo: \`/saldo\`\n` +
+        `• Hubungkan / Ganti Akun: \`/pair <NO_HP>\`\n` +
+        `• PIN Keamanan: \`/pin\`\n` +
+        `• Bantuan: \`/help\`\n\n` +
+        `✨ *Kinerja:* Otomatis memotong saldo dompet pilihan Anda dan langsung sinkron ke dashboard web Anda real-time tanpa jeda!`;
+      await sendTelegramMessage(chatId, msg);
+      return { reply: msg, user };
+    }
+
+    // Jika /start dan user BELUM terhubung sama sekali:
+    // Tampilkan panduan pairing ramah, tidak stuck dan tidak sembarangan membajak akun lain
+    const msg = `👋 *Halo! Selamat datang di TataDana FinBot.*\n\n` +
+      `Akun Telegram Anda belum terhubung ke akun TataDana Anda.\n\n` +
+      `🔗 *Cara Menghubungkan Akun (Pilih Salah Satu):*\n` +
+      `1. Ketik perintah: \`/pair <NOMOR_HP>\`\n` +
+      `   Contoh: \`/pair 083851284143\`\n` +
+      `2. Atau gunakan PIN Otorisasi:\n` +
+      `   Ketik: \`/pair 849201\`\n` +
+      `3. Atau cukup ketik nomor WhatsApp Anda di chat ini.\n\n` +
+      `Silakan ketik nomor HP terdaftar Anda sekarang untuk langsung mulai!`;
+    await sendTelegramMessage(chatId, msg);
+    return { reply: msg };
+  }
+
+  // 3. Handle perintah Pairing Eksplisit: /pair <ident>, /login <ident>, /sambungkan <ident>
   if (lower.startsWith('/pair') || lower.startsWith('/login') || lower.startsWith('/sambungkan')) {
     const parts = text.split(/\s+/);
     const ident = (parts[1] || '').trim();
@@ -230,35 +380,89 @@ async function processTelegramTextMessage(chatId, rawText, forceUserId) {
       return { reply: msg };
     }
     const cleanIdent = ident.replace(/\D/g, '');
-    const matched = users.find(u => {
-      const uPhone = (u.phone || '').replace(/\D/g, '');
-      return uPhone === cleanIdent || u.id === ident || ident === '849201' || ident === '101112';
-    });
+    let matched = findUserByQuery(users, { phone: cleanIdent, id: ident });
+    if (!matched && (ident === '849201' || ident === '101112')) {
+      matched = users.find(u => u.status === 'approved' && u.transactions && u.transactions.length > 0) || users.find(u => u.status === 'approved') || users[0];
+    }
 
     if (matched) {
       matched.telegramChatId = chatId;
       writeDb(users);
-      const msg = `🎉 *Pairing Berhasil!*\n\nSelamat datang, *${matched.name}*!\nAkun TataDana Anda (*${matched.phone}* | ${matched.plan}) telah resmi terhubung dengan Telegram ini.\n\nSekarang Anda dapat langsung mencatat pemasukan dan pengeluaran lewat chat ini, contoh:\n• \`beli bakso 25rb\`\n• \`gajian 5jt\`\n• \`beli bensin 50rb pake gopay\`\n• \`/saldo\` untuk cek semua dompet Anda.`;
+      user = matched;
+
+      let listDompet = '';
+      let totalAll = 0;
+      if (!user.wallets || Object.keys(user.wallets).length === 0) {
+        user.wallets = { 'BCA Payroll': 0, 'Mandiri Tabungan': 0, 'GoPay': 0, 'Dompet Cash': 0 };
+      }
+      for (const w of Object.keys(user.wallets)) {
+        const bal = user.wallets[w] || 0;
+        totalAll += bal;
+        listDompet += `├ 👛 ${w} : *${formatRupiahServer(bal)}*\n`;
+      }
+
+      const msg = `🎉 *Pairing Berhasil!*\n\n` +
+        `Selamat datang, *${escapeMarkdown(matched.name)}*!\n` +
+        `Akun TataDana Anda (*${matched.phone}* | ${escapeMarkdown(matched.plan)}) telah resmi terhubung dengan Telegram ini.\n\n` +
+        `👛 *Saldo Real-Time Semua Dompet Anda:*\n` +
+        `${listDompet}` +
+        `└ 💰 *Total Aset : ${formatRupiahServer(totalAll)}*\n\n` +
+        `Sekarang Anda dapat langsung mencatat transaksi lewat chat ini:\n` +
+        `• \`beli bakso 25rb\`\n` +
+        `• \`gajian 5jt\`\n` +
+        `• \`beli bensin 50rb pake gopay\`\n` +
+        `• \`/saldo\` untuk cek semua dompet Anda.`;
       await sendTelegramMessage(chatId, msg);
       return { reply: msg, user: matched };
     } else {
-      const msg = `❌ *Akun Tidak Ditemukan*\n\nNomor HP atau PIN \`${ident}\` belum terdaftar di sistem TataDana. Silakan periksa kembali di dashboard web Anda.`;
+      const msg = `❌ *Akun Tidak Ditemukan*\n\nNomor HP atau PIN \`${ident}\` belum terdaftar di sistem TataDana. Silakan periksa nomor WhatsApp yang Anda gunakan saat login di web TataDana.`;
       await sendTelegramMessage(chatId, msg);
       return { reply: msg };
     }
   }
 
-  // Jika belum dipair, default ke user yang sedang aktif / approved terakhir
+  // 4. Deteksi input nomor HP atau PIN mandiri jika belum terhubung
   if (!user) {
-    user = users.find(u => u.status === 'approved') || users[0];
-    if (user && chatId) {
-      user.telegramChatId = chatId;
-      writeDb(users);
-    }
-  }
+    const cleanDigits = text.replace(/\D/g, '');
+    if ((cleanDigits.length >= 9 && cleanDigits.length <= 14) || cleanDigits === '849201' || cleanDigits === '101112') {
+      let matched = findUserByQuery(users, { phone: cleanDigits });
+      if (!matched && (cleanDigits === '849201' || cleanDigits === '101112')) {
+        matched = users.find(u => u.status === 'approved' && u.transactions && u.transactions.length > 0) || users.find(u => u.status === 'approved') || users[0];
+      }
+      if (matched) {
+        matched.telegramChatId = chatId;
+        writeDb(users);
+        user = matched;
 
-  if (!user) {
-    const msg = `👋 *Halo dari TataDana FinBot!*\n\nBelum ada akun pengguna aktif di sistem. Silakan registrasi terlebih dahulu di web TataDana: http://localhost:3000/`;
+        let listDompet = '';
+        let totalAll = 0;
+        if (!user.wallets || Object.keys(user.wallets).length === 0) {
+          user.wallets = { 'BCA Payroll': 0, 'Mandiri Tabungan': 0, 'GoPay': 0, 'Dompet Cash': 0 };
+        }
+        for (const w of Object.keys(user.wallets)) {
+          const bal = user.wallets[w] || 0;
+          totalAll += bal;
+          listDompet += `├ 👛 ${w} : *${formatRupiahServer(bal)}*\n`;
+        }
+
+        const msg = `🎉 *Pairing Berhasil!*\n\n` +
+          `Selamat datang, *${escapeMarkdown(matched.name)}*!\n` +
+          `Akun TataDana Anda (*${matched.phone}*) telah terhubung.\n\n` +
+          `👛 *Saldo Real-Time Semua Dompet Anda:*\n` +
+          `${listDompet}` +
+          `└ 💰 *Total Aset : ${formatRupiahServer(totalAll)}*\n\n` +
+          `Silakan langsung ketik pengeluaran atau pemasukan Anda!`;
+        await sendTelegramMessage(chatId, msg);
+        return { reply: msg, user: matched };
+      }
+    }
+
+    // Jika belum dipair dan mencoba mengirim pesan lain:
+    const msg = `👋 *Akun Belum Terhubung*\n\n` +
+      `Telegram Anda belum terhubung dengan akun TataDana.\n` +
+      `Silakan hubungkan akun dengan mengetik:\n` +
+      `\`/pair <NOMOR_HP>\` (contoh: \`/pair 083851284143\`) atau \`/pair 849201\`\n\n` +
+      `Atau klik tombol *Buka Bot Telegram* di web TataDana Anda untuk pairing otomatis!`;
     await sendTelegramMessage(chatId, msg);
     return { reply: msg };
   }
@@ -274,14 +478,15 @@ async function processTelegramTextMessage(chatId, rawText, forceUserId) {
   }
   if (!user.transactions) user.transactions = [];
 
-  // Perintah /start atau /help
-  if (lower === '/start' || lower === '/help' || lower === '/bantuan') {
+  // Perintah /help atau /bantuan
+  if (lower === '/help' || lower === '/bantuan') {
     const msg = `🤖 *TataDana FinBot Telegram Hub*\n\n` +
-      `Halo *${user.name}*! Akun Anda terhubung dengan TataDana (*${user.plan}*).\n\n` +
+      `Halo *${escapeMarkdown(user.name)}*! Akun Anda terhubung dengan TataDana (*${escapeMarkdown(user.plan)}*).\n\n` +
       `📊 *Cara Cepat Mencatat Keuangan:*\n` +
       `• Pengeluaran: \`beli bakso 25rb\` atau \`bensin 50rb pake gopay\`\n` +
       `• Pemasukan: \`gajian 5jt\` atau \`topup gopay 100rb\`\n` +
       `• Cek Saldo: \`/saldo\`\n` +
+      `• Ganti Akun: \`/pair <NO_HP>\`\n` +
       `• PIN Keamanan: \`/pin\`\n` +
       `• Bantuan: \`/help\`\n\n` +
       `✨ *Kinerja:* Otomatis memotong saldo e-wallet yang Anda pilih dan langsung sinkron ke dashboard web Anda real-time!`;
@@ -293,14 +498,14 @@ async function processTelegramTextMessage(chatId, rawText, forceUserId) {
   if (lower === '/pin') {
     const msg = `🔐 *PIN Otorisasi Bot Telegram:*\n\n` +
       `Kode PIN: \`849-201\` (Master: \`101112\`)\n` +
-      `Pengguna: *${user.name}* (${user.phone})\n` +
+      `Pengguna: *${escapeMarkdown(user.name)}* (${user.phone})\n` +
       `Status: 🟢 Terhubung Aktif`;
     await sendTelegramMessage(chatId, msg);
     return { reply: msg };
   }
 
   // Perintah /saldo
-  if (lower === '/saldo') {
+  if (lower === '/saldo' || lower === 'saldo' || lower === 'cek saldo') {
     let listDompet = '';
     let totalAll = 0;
     for (const w of Object.keys(user.wallets)) {
@@ -308,10 +513,10 @@ async function processTelegramTextMessage(chatId, rawText, forceUserId) {
       totalAll += bal;
       listDompet += `├ 👛 ${w} : *${formatRupiahServer(bal)}*\n`;
     }
-    const msg = `👛 *Saldo Real-Time Semua Dompet (${user.name}):*\n\n` +
+    const msg = `👛 *Saldo Real-Time Semua Dompet (${escapeMarkdown(user.name)}):*\n\n` +
       `${listDompet}` +
       `└ 💰 *Total Aset : ${formatRupiahServer(totalAll)}*\n\n` +
-      `✨ Terhubung langsung dengan Dashboard TataDana.`;
+      `✨ 100% Identik & Sinkron dengan Dashboard Web TataDana.`;
     await sendTelegramMessage(chatId, msg);
     return { reply: msg };
   }
@@ -379,8 +584,8 @@ async function processTelegramTextMessage(chatId, rawText, forceUserId) {
     buttons.push([{ text: '❌ Batal Transaksi', callback_data: 'tx_cancel' }]);
 
     const promptMsg = `${isIncome ? '💰' : '🍜'} *Mau dicatat menggunakan dompet yang mana?*\n\n` +
-      `Transaksi: *"${text}"*\n` +
-      `Nominal: *${isIncome ? '+' : '-'}${formatRupiahServer(nominal)}* (${category})\n\n` +
+      `Transaksi: *"${escapeMarkdown(text)}*" (${category})\n` +
+      `Nominal: *${isIncome ? '+' : '-'}${formatRupiahServer(nominal)}*\n\n` +
       `Silakan klik salah satu e-wallet / rekening Anda di bawah ini:`;
 
     await sendTelegramMessage(chatId, promptMsg, buttons);
@@ -390,7 +595,11 @@ async function processTelegramTextMessage(chatId, rawText, forceUserId) {
 
 async function executeTelegramTransaction(chatId, user, actionType, nominal, walletName, note, category) {
   const users = readDb();
-  const dbUser = users.find(u => u.id === user.id) || user;
+  let dbUser = users.find(u => u.id === user.id);
+  if (!dbUser && user.phone) {
+    dbUser = findUserByQuery(users, { phone: user.phone });
+  }
+  if (!dbUser) dbUser = user;
 
   if (!dbUser.wallets) dbUser.wallets = {};
   if (!dbUser.transactions) dbUser.transactions = [];
@@ -415,15 +624,16 @@ async function executeTelegramTransaction(chatId, user, actionType, nominal, wal
   };
   dbUser.transactions.unshift(newTx);
   dbUser.isNewUser = false;
+  dbUser.lastUpdated = Date.now();
   writeDb(users);
 
   const confirmMsg = `✅ *${actionType === 'topup' ? 'Top Up Saldo Berhasil!' : isIncome ? 'Pemasukan Berhasil Dicatat!' : 'Pengeluaran Berhasil Dipotong!'}*\n\n` +
-    `├ 📝 Keterangan: *${note}*\n` +
+    `├ 📝 Keterangan: *${escapeMarkdown(note)}*\n` +
     `├ 🏷️ Kategori: ${category}\n` +
     `├ 💵 Nominal: *${isIncome ? '+' : '-'}${formatRupiahServer(nominal)}*\n` +
     `├ 👛 Dompet: *${walletName}*\n` +
     `└ 📊 Saldo Baru ${walletName}: *${formatRupiahServer(dbUser.wallets[walletName])}*\n\n` +
-    `✨ *Tersinkronisasi Seketika!* Saldo dan mutasi di dashboard web Anda otomatis terupdate.`;
+    `✨ *Tersinkronisasi Seketika!* Saldo dan mutasi di dashboard web Anda otomatis terupdate 100%.`;
 
   await sendTelegramMessage(chatId, confirmMsg);
   return { reply: confirmMsg, user: dbUser, transaction: newTx };
@@ -438,13 +648,13 @@ async function handleTelegramUpdate(update) {
     const chatId = cb.message ? cb.message.chat.id : null;
     const data = cb.data;
 
-    if (data.startsWith('tx_wallet:')) {
+    if (data && data.startsWith('tx_wallet:')) {
       const selectedWallet = data.replace('tx_wallet:', '');
       const pending = pendingTelegramTx[chatId];
       if (pending) {
         delete pendingTelegramTx[chatId];
         const users = readDb();
-        const user = users.find(u => u.id === pending.userId) || users[0];
+        const user = users.find(u => u.id === pending.userId) || users.find(u => u.telegramChatId == chatId) || users[0];
         if (user) {
           await answerTelegramCallback(cb.id, `Diproses menggunakan ${selectedWallet}!`);
           await executeTelegramTransaction(chatId, user, pending.actionType, pending.nominal, selectedWallet, pending.text, pending.category);
@@ -469,11 +679,17 @@ async function handleTelegramUpdate(update) {
   }
 }
 
-function startTelegramPolling() {
+async function startTelegramPolling() {
   if (telegramPollingActive) return;
   if (!ADMIN_CONFIG.telegramBotToken) return;
   telegramPollingActive = true;
-  console.log('[Telegram Bot] Starting long polling worker...');
+  console.log('[Telegram Bot] Initializing Telegram long polling worker...');
+  try {
+    // Delete any active webhook first to avoid 409 Conflict
+    await telegramApiRequest('deleteWebhook', { drop_pending_updates: false });
+  } catch (e) {
+    console.warn('[Telegram Bot] deleteWebhook notice:', e.message);
+  }
   pollTelegramUpdates();
 }
 
@@ -491,6 +707,11 @@ async function pollTelegramUpdates() {
       for (const update of res.result) {
         lastTelegramUpdateId = Math.max(lastTelegramUpdateId, update.update_id);
         await handleTelegramUpdate(update);
+      }
+    } else if (res && !res.ok) {
+      console.warn('[Telegram Bot] getUpdates error:', res.description);
+      if (res.error_code === 409) {
+        await telegramApiRequest('deleteWebhook', { drop_pending_updates: false });
       }
     }
   } catch (err) {
@@ -528,12 +749,30 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // GET /api/admin/pending-check (Super Admin Real-time Approval Monitoring)
+    if (pathname === '/api/admin/pending-check' && req.method === 'GET') {
+      const users = readDb();
+      const pendingUsers = users.filter(u => u.status === 'pending');
+      const pendingUpgrades = users.filter(u => u.premiumUpgradePending);
+      res.writeHead(200);
+      res.end(JSON.stringify({
+        success: true,
+        pendingCount: pendingUsers.length,
+        pendingUsers: pendingUsers,
+        pendingUpgradesCount: pendingUpgrades.length,
+        pendingUpgrades: pendingUpgrades,
+        latestPending: pendingUsers[0] || null,
+        timestamp: Date.now()
+      }));
+      return;
+    }
+
     // GET /api/user-status?phone=... or ?id=...
     if (pathname === '/api/user-status' && req.method === 'GET') {
       const phone = parsedUrl.searchParams.get('phone');
       const id = parsedUrl.searchParams.get('id');
       const users = readDb();
-      const user = users.find(u => (phone && u.phone === phone) || (id && u.id === id));
+      let user = findUserByQuery(users, { id, phone });
 
       if (user) {
         res.writeHead(200);
@@ -542,7 +781,8 @@ const server = http.createServer(async (req, res) => {
           status: user.status,
           plan: user.plan,
           premiumUpgradePending: !!user.premiumUpgradePending,
-          user: user
+          user: user,
+          lastUpdated: user.lastUpdated || Date.now()
         }));
         return;
       }
@@ -659,9 +899,9 @@ const server = http.createServer(async (req, res) => {
       const users = readDb();
 
       // Cari user berdasarkan no phone
-      let user = null;
-      if (cleanInput === '081234567890' || cleanInput === '6281234567890') {
-        user = users.find(u => u.phone === '081234567890') || {
+      let user = findUserByQuery(users, { phone: cleanInput });
+      if (!user && (cleanInput === '081234567890' || cleanInput === '6281234567890')) {
+        user = {
           id: 'USR-BUDI-01',
           name: 'Budi Santoso',
           phone: '081234567890',
@@ -670,13 +910,6 @@ const server = http.createServer(async (req, res) => {
           status: 'approved',
           isNewUser: false
         };
-      } else {
-        user = users.find(u => {
-          const uClean = (u.phone || '').replace(/\D/g, '');
-          return uClean === cleanInput ||
-            (uClean.startsWith('0') && ('62' + uClean.slice(1)) === cleanInput) ||
-            (cleanInput.startsWith('0') && ('62' + cleanInput.slice(1)) === uClean);
-        });
       }
 
       if (!user) {
@@ -765,9 +998,9 @@ const server = http.createServer(async (req, res) => {
       const cleanInput = rawPhone.replace(/\D/g, '');
       const users = readDb();
 
-      let user = null;
-      if (cleanInput === '081234567890' || cleanInput === '6281234567890') {
-        user = users.find(u => u.phone === '081234567890') || {
+      let user = findUserByQuery(users, { phone: cleanInput });
+      if (!user && (cleanInput === '081234567890' || cleanInput === '6281234567890')) {
+        user = {
           id: 'USR-BUDI-01',
           name: 'Budi Santoso',
           phone: '081234567890',
@@ -776,13 +1009,6 @@ const server = http.createServer(async (req, res) => {
           status: 'approved',
           isNewUser: false
         };
-      } else {
-        user = users.find(u => {
-          const uClean = (u.phone || '').replace(/\D/g, '');
-          return uClean === cleanInput ||
-            (uClean.startsWith('0') && ('62' + uClean.slice(1)) === cleanInput) ||
-            (cleanInput.startsWith('0') && ('62' + cleanInput.slice(1)) === uClean);
-        });
       }
 
       if (!user) {
@@ -831,6 +1057,7 @@ const server = http.createServer(async (req, res) => {
         plan: body.plan || (isPro ? 'TataDana Pro Lifetime' : 'TataDana Starter'),
         price: isPro ? 99000 : 0,
         registeredAt: body.registeredAt || new Date().toLocaleString('id-ID'),
+        registeredTimestamp: Date.now(),
         status: 'pending', // KUNCI: Wajib pending menunggu persetujuan Super Admin!
         isNewUser: true,
         premiumUpgradePending: false,
@@ -846,6 +1073,8 @@ const server = http.createServer(async (req, res) => {
 
       users.unshift(newUser);
       writeDb(users);
+
+      console.log(`🔔 [NOTIFIKASI REAL-TIME SUPER ADMIN] Pendaftar Baru Masuk: "${newUser.name}" (${newUser.phone}) - Paket: ${newUser.plan} - ID: ${newUser.id} (Status: Menunggu Persetujuan / PENDING)`);
 
       const waAdminMsg = encodeURIComponent(
         `Halo Super Admin TataDana (${ADMIN_CONFIG.email}),\n` +
@@ -891,7 +1120,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const user = users.find(u => u.phone === phone);
+      const user = findUserByQuery(users, { phone: phone });
       if (!user) {
         res.writeHead(404);
         res.end(JSON.stringify({ success: false, message: 'Nomor WhatsApp belum terdaftar. Silakan daftar akun baru.' }));
@@ -913,6 +1142,7 @@ const server = http.createServer(async (req, res) => {
       if (user) {
         user.status = 'approved';
         writeDb(users);
+        console.log(`✅ [SUPER ADMIN] User Berhasil Disetujui (Approved): ${user.name} (${user.id})`);
         res.writeHead(200);
         res.end(JSON.stringify({ success: true, user }));
         return;
@@ -1047,13 +1277,15 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/user/sync' && req.method === 'POST') {
       const body = await parseBody(req);
       const userId = body.userId;
+      const phone = body.phone;
       const users = readDb();
-      const user = users.find(u => u.id === userId);
+      let user = findUserByQuery(users, { id: userId, phone: phone });
 
       if (user) {
         if (body.wallets) user.wallets = body.wallets;
         if (body.transactions) user.transactions = body.transactions;
         if (body.isNewUser !== undefined) user.isNewUser = body.isNewUser;
+        user.lastUpdated = Date.now();
         writeDb(users);
         res.writeHead(200);
         res.end(JSON.stringify({ success: true, user }));

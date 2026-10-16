@@ -147,8 +147,43 @@
         </div>
       </div>
 
-      <!-- Right Profile & Logout -->
-      <div class="flex items-center gap-3">
+      <!-- Right Profile, Sound Toggle, Notification Bell & Logout -->
+      <div class="flex items-center gap-2.5">
+        <!-- Audio Chime Toggle -->
+        <button id="btn-sound-toggle" onclick="toggleAdminSound()" class="px-2.5 py-1.5 rounded-xl bg-[#0d162d] border border-amber-500/30 text-amber-300 hover:text-white transition-all text-xs flex items-center gap-1.5 shadow" title="Aktifkan/Nonaktifkan Suara Notifikasi">
+          <span id="icon-sound-status">🔔</span>
+          <span class="hidden md:inline text-[10px] font-bold" id="label-sound-status">Suara: ON</span>
+        </button>
+
+        <!-- Notification Bell & Dropdown Drawer -->
+        <div class="relative">
+          <button id="btn-admin-notif-bell" onclick="toggleNotificationDrawer()" class="relative p-2 rounded-xl bg-[#0d162d] border border-amber-500/40 text-amber-300 hover:text-white transition-all flex items-center justify-center shadow" title="Antrean Pendaftar Baru">
+            <span class="text-base">🛎️</span>
+            <span id="admin-bell-badge" class="hidden absolute -top-1.5 -right-1.5 bg-rose-600 text-white font-black text-[10px] min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center shadow-lg border border-rose-400 animate-pulse">0</span>
+          </button>
+          
+          <!-- Dropdown Drawer -->
+          <div id="admin-notif-dropdown" class="hidden absolute right-0 mt-2 w-80 sm:w-96 bg-[#090e1c] border-2 border-amber-500/70 rounded-2xl shadow-2xl p-4 z-50 text-xs gold-glow space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+              <div class="font-extrabold text-white text-xs flex items-center gap-1.5">
+                <span>🔔</span> <span>Antrean Pendaftar Baru (<span id="notif-dropdown-count">0</span>)</span>
+              </div>
+              <button onclick="toggleNotificationDrawer()" class="text-slate-400 hover:text-white text-xs font-bold px-1.5 py-0.5 rounded">✕</button>
+            </div>
+            <div id="notif-dropdown-list" class="max-h-64 overflow-y-auto space-y-2 divide-y divide-slate-800/60">
+              <div class="py-4 text-center text-slate-500 text-xs">Memeriksa antrean pendaftar...</div>
+            </div>
+            <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
+              <button onclick="switchAdminSubView('approval'); filterApprovalTable('pending'); toggleNotificationDrawer();" class="text-sky-400 hover:underline font-bold text-[11px]">
+                Buka Antrean Approval →
+              </button>
+              <button onclick="quickApproveAllPending()" id="btn-dropdown-approve-all" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] px-2.5 py-1 rounded-lg shadow transition-all">
+                ✓ Setujui Semua
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="flex items-center gap-2 bg-[#0d162d] border border-amber-500/40 px-3 py-1.5 rounded-full">
           <div class="w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] flex items-center justify-center">
             SA
@@ -229,6 +264,34 @@
 
       <!-- SUPER ADMIN MAIN VIEWPORT -->
       <main class="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 bg-[#070b14]/90">
+
+        <!-- STICKY PENDING APPROVAL NOTIFICATION BANNER -->
+        <div id="admin-sticky-pending-banner" class="hidden bg-gradient-to-r from-amber-950 via-[#261702] to-amber-950 border-2 border-amber-500/70 rounded-2xl p-4 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs max-w-6xl mx-auto gold-glow">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400 text-amber-300 flex items-center justify-center text-xl flex-shrink-0 animate-bounce">
+              ⚠️
+            </div>
+            <div>
+              <div class="font-black text-amber-300 text-sm flex items-center gap-2">
+                <span>ADA PENDAFTAR BARU MENUNGGU PERSETUJUAN</span>
+                <span id="badge-sticky-pending-counter" class="bg-rose-600 text-white font-black text-[10px] px-2 py-0.5 rounded-full animate-pulse">0 Pending</span>
+              </div>
+              <p class="text-[11px] text-slate-300 mt-0.5" id="sticky-pending-description">
+                Terdapat calon pengguna baru yang belum disetujui. Akun mereka masih dibekukan hingga Super Admin melakukan approval.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <button onclick="quickApproveLatestPending()" id="btn-sticky-quick-approve" class="flex-1 sm:flex-none bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black px-4 py-2 rounded-xl text-xs shadow-lg transition-all flex items-center justify-center gap-1.5">
+              <span>⚡</span>
+              <span>Setujui Langsung (1-Click)</span>
+            </button>
+            <button onclick="switchAdminSubView('approval'); filterApprovalTable('pending');" class="flex-1 sm:flex-none bg-[#121c38] hover:bg-[#1a2952] text-amber-300 border border-amber-500/50 font-bold px-3.5 py-2 rounded-xl text-xs transition-all flex items-center justify-center gap-1">
+              <span>👁️</span>
+              <span>Lihat di Tabel</span>
+            </button>
+          </div>
+        </div>
 
         <!-- =================================================================== -->
         <!-- SUBVIEW 1: APPROVAL PENDAFTARAN & UPGRADE PREMIUM / IMPERSONATE     -->
@@ -654,6 +717,57 @@
     </div>
   </div>
 
+  <!-- Floating Real-Time Popup Notification Card (Appears immediately when new registration detected) -->
+  <div id="admin-realtime-alert-card" class="fixed top-6 right-6 z-50 max-w-md w-full bg-[#0c162e] border-2 border-amber-400 rounded-3xl p-5 shadow-2xl space-y-3.5 gold-glow transition-all duration-300 transform translate-x-full opacity-0 pointer-events-auto">
+    <div class="flex items-start justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-xl shadow-lg animate-bounce">
+          🔔
+        </div>
+        <div>
+          <div class="text-[10px] font-black tracking-widest uppercase text-amber-400 font-mono flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+            <span>NOTIFIKASI REAL-TIME</span>
+          </div>
+          <h4 class="text-sm font-black text-white">Ada Pengguna Baru Mendaftar!</h4>
+        </div>
+      </div>
+      <button onclick="dismissRealtimeAlert()" class="text-slate-400 hover:text-white p-1 rounded-lg text-sm font-bold" title="Tutup Notifikasi">✕</button>
+    </div>
+
+    <!-- User details inside popup -->
+    <div class="bg-[#070b14] border border-amber-500/30 rounded-2xl p-3.5 space-y-2 text-xs">
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400">Nama Calon Pengguna:</span>
+        <b id="alert-card-name" class="text-white text-sm font-bold">-</b>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400">Nomor WhatsApp:</span>
+        <b id="alert-card-phone" class="text-sky-300 font-mono font-bold">-</b>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400">Paket Diminta:</span>
+        <span id="alert-card-plan" class="text-amber-300 font-bold bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded">-</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400">Waktu Pendaftaran:</span>
+        <span id="alert-card-time" class="text-slate-300 font-mono text-[11px]">-</span>
+      </div>
+    </div>
+
+    <!-- Quick action buttons -->
+    <div class="flex items-center gap-2 pt-1">
+      <button id="btn-alert-approve-now" onclick="approveFromAlertCard()" class="flex-1 bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black py-2.5 px-3 rounded-xl shadow-lg transition-all text-xs flex items-center justify-center gap-1.5">
+        <span>⚡</span>
+        <span>Setujui Sekarang (1-Click)</span>
+      </button>
+      <button onclick="viewUserFromAlertCard()" class="bg-[#121c38] hover:bg-[#1a2952] text-amber-300 border border-amber-500/50 font-bold py-2.5 px-3 rounded-xl text-xs transition-all flex items-center justify-center gap-1">
+        <span>👁️</span>
+        <span>Lihat</span>
+      </button>
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
   <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
@@ -665,6 +779,342 @@
     ];
     let manageFilter = 'all';
     let approvalFilter = 'all';
+
+    // Real-Time Notification & Polling Engine State
+    let adminRealtimeTimer = null;
+    let knownPendingIds = new Set();
+    let currentAlertUserId = null;
+    let soundEnabled = localStorage.getItem('tatadana_admin_sound') !== 'false';
+    let isInitialPollDone = false;
+
+    function toggleAdminSound() {
+      soundEnabled = !soundEnabled;
+      localStorage.setItem('tatadana_admin_sound', soundEnabled ? 'true' : 'false');
+      updateSoundButtonUI();
+      if (soundEnabled) {
+        playAdminNotificationChime();
+        showToast('Suara Notifikasi Aktif 🔔', 'Suara chime real-time aktif saat ada calon pendaftar baru.', 'success');
+      } else {
+        showToast('Suara Notifikasi Senyap 🔕', 'Notifikasi suara pendaftar baru dimatikan.', 'info');
+      }
+    }
+
+    function updateSoundButtonUI() {
+      const icon = document.getElementById('icon-sound-status');
+      const label = document.getElementById('label-sound-status');
+      if (icon) icon.innerText = soundEnabled ? '🔔' : '🔕';
+      if (label) label.innerText = soundEnabled ? 'Suara: ON' : 'Suara: OFF';
+    }
+
+    // Elegant Web Audio API Synth Chimes (Zero external files needed)
+    function playAdminNotificationChime() {
+      if (!soundEnabled) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        
+        // Note 1: E5 (659.25 Hz)
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(659.25, now);
+        gain1.gain.setValueAtTime(0.25, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.35);
+
+        // Note 2: G#5 (830.61 Hz)
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(830.61, now + 0.12);
+        gain2.gain.setValueAtTime(0.3, now + 0.12);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.12);
+        osc2.stop(now + 0.5);
+
+        // Note 3: B5 (987.77 Hz) - crisp executive chime
+        const osc3 = ctx.createOscillator();
+        const gain3 = ctx.createGain();
+        osc3.type = 'sine';
+        osc3.frequency.setValueAtTime(987.77, now + 0.24);
+        gain3.gain.setValueAtTime(0.35, now + 0.24);
+        gain3.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+        osc3.connect(gain3);
+        gain3.connect(ctx.destination);
+        osc3.start(now + 0.24);
+        osc3.stop(now + 0.85);
+      } catch (e) {
+        console.log('Audio playback error (browser policy):', e);
+      }
+    }
+
+    function playSuccessChime() {
+      if (!soundEnabled) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.2); // G5
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.45);
+      } catch (e) {}
+    }
+
+    function startAdminRealtimeMonitor() {
+      if (adminRealtimeTimer) clearInterval(adminRealtimeTimer);
+      updateSoundButtonUI();
+      // Fast polling every 2.5 seconds (2500ms)
+      adminRealtimeTimer = setInterval(pollAdminRealtime, 2500);
+      pollAdminRealtime();
+    }
+
+    function stopAdminRealtimeMonitor() {
+      if (adminRealtimeTimer) {
+        clearInterval(adminRealtimeTimer);
+        adminRealtimeTimer = null;
+      }
+    }
+
+    function pollAdminRealtime() {
+      fetch('/api/admin/pending-check')
+        .then(res => res.json())
+        .then(data => {
+          if (!data.success) return;
+          const currentPending = data.pendingUsers || [];
+          
+          if (!isInitialPollDone) {
+            // First run: register all existing pending IDs without alarm
+            currentPending.forEach(u => knownPendingIds.add(u.id));
+            isInitialPollDone = true;
+            updateStickyBanner(currentPending);
+            updateNotificationDropdown(currentPending);
+            return;
+          }
+
+          // Check if any NEW pending users arrived that we haven't seen
+          let brandNewUsers = [];
+          currentPending.forEach(u => {
+            if (!knownPendingIds.has(u.id)) {
+              brandNewUsers.push(u);
+              knownPendingIds.add(u.id);
+            }
+          });
+
+          // Brand new user detected! Trigger real-time alert!
+          if (brandNewUsers.length > 0) {
+            const latestUser = brandNewUsers[0];
+            // 1. Play chime audio
+            playAdminNotificationChime();
+            // 2. Show floating popup alert card with 1-click Approve
+            showRealtimeAlertCard(latestUser);
+            // 3. Show prominent toast
+            showToast(
+              '🔔 Ada Pengguna Baru Mendaftar!',
+              `<b>${latestUser.name}</b> (${latestUser.phone}) mendaftar paket <b>${latestUser.plan}</b>. Menunggu persetujuan Super Admin!`,
+              'info'
+            );
+            // 4. Record to audit log
+            addAuditLog('Pendaftar Baru Masuk', `Pendaftar baru ${latestUser.name} (${latestUser.phone}) - ${latestUser.plan} menunggu persetujuan.`);
+            // 5. Refresh data list smoothly
+            fetchLatestData();
+          }
+
+          updateStickyBanner(currentPending);
+          updateNotificationDropdown(currentPending);
+        })
+        .catch(err => {
+          // silently handle network jitter
+        });
+    }
+
+    function updateStickyBanner(pendingUsers) {
+      const banner = document.getElementById('admin-sticky-pending-banner');
+      const counter = document.getElementById('badge-sticky-pending-counter');
+      const desc = document.getElementById('sticky-pending-description');
+      if (!banner) return;
+
+      if (pendingUsers.length > 0) {
+        banner.classList.remove('hidden');
+        if (counter) counter.innerText = `${pendingUsers.length} Pendaftar Pending`;
+        if (desc) {
+          const names = pendingUsers.slice(0, 3).map(u => u.name).join(', ');
+          const extra = pendingUsers.length > 3 ? ` dan ${pendingUsers.length - 3} lainnya` : '';
+          desc.innerHTML = `Pendaftar: <b class="text-amber-300">${names}${extra}</b> sedang menunggu persetujuan (Approve) Super Admin.`;
+        }
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    function updateNotificationDropdown(pendingUsers) {
+      const badge = document.getElementById('admin-bell-badge');
+      const countEl = document.getElementById('notif-dropdown-count');
+      const listEl = document.getElementById('notif-dropdown-list');
+      const sideBadge = document.getElementById('badge-admin-pending-users');
+      const headerPending = document.getElementById('admin-header-pending-count');
+
+      const count = pendingUsers.length;
+      if (count > 0) {
+        if (badge) {
+          badge.classList.remove('hidden');
+          badge.innerText = count;
+        }
+        if (sideBadge) {
+          sideBadge.className = 'bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-pulse shadow-md';
+          sideBadge.innerText = count;
+        }
+        if (headerPending) {
+          headerPending.className = 'bg-rose-600 text-white px-2.5 py-0.5 rounded-full font-black font-mono animate-pulse shadow-md';
+          headerPending.innerText = count;
+        }
+      } else {
+        if (badge) badge.classList.add('hidden');
+        if (sideBadge) {
+          sideBadge.className = 'bg-amber-500 text-slate-950 text-[10px] font-black px-1.5 py-0.2 rounded-full';
+          sideBadge.innerText = '0';
+        }
+        if (headerPending) {
+          headerPending.className = 'bg-slate-700 text-slate-300 px-2 py-0.2 rounded-full font-black font-mono';
+          headerPending.innerText = '0';
+        }
+      }
+
+      if (countEl) countEl.innerText = count;
+      if (listEl) {
+        if (count === 0) {
+          listEl.innerHTML = '<div class="py-4 text-center text-slate-500 text-xs">Semua pendaftar telah disetujui. Tidak ada antrean.</div>';
+          return;
+        }
+        listEl.innerHTML = '';
+        pendingUsers.forEach(u => {
+          const item = document.createElement('div');
+          item.className = 'py-2 flex items-center justify-between gap-2';
+          item.innerHTML = `
+            <div class="flex-1 min-w-0">
+              <div class="font-bold text-white text-xs truncate">${u.name}</div>
+              <div class="text-[10px] text-slate-400 font-mono">${u.phone} • <span class="text-amber-300">${u.plan}</span></div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button onclick="approveUser('${u.id}')" class="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black text-[10px] px-2.5 py-1 rounded-lg shadow transition-all">
+                ✓ Approve
+              </button>
+            </div>
+          `;
+          listEl.appendChild(item);
+        });
+      }
+    }
+
+    function toggleNotificationDrawer() {
+      const drawer = document.getElementById('admin-notif-dropdown');
+      if (drawer) {
+        drawer.classList.toggle('hidden');
+      }
+    }
+
+    function showRealtimeAlertCard(user) {
+      currentAlertUserId = user.id;
+      const card = document.getElementById('admin-realtime-alert-card');
+      if (!card) return;
+
+      document.getElementById('alert-card-name').innerText = user.name;
+      document.getElementById('alert-card-phone').innerText = user.phone;
+      document.getElementById('alert-card-plan').innerText = user.plan;
+      document.getElementById('alert-card-time').innerText = user.registeredAt || new Date().toLocaleTimeString('id-ID');
+
+      card.classList.remove('translate-x-full', 'opacity-0');
+      card.classList.add('translate-x-0', 'opacity-100');
+
+      // Auto dismiss after 20 seconds
+      clearTimeout(card._autoDismiss);
+      card._autoDismiss = setTimeout(() => {
+        dismissRealtimeAlert();
+      }, 20000);
+    }
+
+    function dismissRealtimeAlert() {
+      const card = document.getElementById('admin-realtime-alert-card');
+      if (!card) return;
+      card.classList.remove('translate-x-0', 'opacity-100');
+      card.classList.add('translate-x-full', 'opacity-0');
+    }
+
+    function approveFromAlertCard() {
+      if (currentAlertUserId) {
+        approveUser(currentAlertUserId);
+        dismissRealtimeAlert();
+      }
+    }
+
+    function viewUserFromAlertCard() {
+      if (currentAlertUserId) {
+        dismissRealtimeAlert();
+        switchAdminSubView('approval');
+        filterApprovalTable('pending');
+        highlightUserRow(currentAlertUserId);
+      }
+    }
+
+    function quickApproveLatestPending() {
+      const pendingUsers = usersList.filter(u => u.status === 'pending');
+      if (pendingUsers.length > 0) {
+        approveUser(pendingUsers[0].id);
+      } else {
+        showToast('Info', 'Tidak ada antrean pendaftar pending saat ini.', 'info');
+      }
+    }
+
+    function quickApproveAllPending() {
+      const pendingUsers = usersList.filter(u => u.status === 'pending');
+      if (pendingUsers.length === 0) {
+        showToast('Info', 'Tidak ada pendaftar pending.', 'info');
+        return;
+      }
+      Promise.all(pendingUsers.map(u => 
+        fetch('/api/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: u.id })
+        }).then(r => r.json())
+      )).then(() => {
+        playSuccessChime();
+        showToast('Semua Disetujui ✓', `Berhasil menyetujui ${pendingUsers.length} pendaftar baru sekaligus!`, 'success');
+        addAuditLog('Batch Approve', `Super Admin menyetujui ${pendingUsers.length} pendaftar baru secara serentak.`);
+        fetchLatestData();
+        toggleNotificationDrawer();
+      });
+    }
+
+    function highlightUserRow(userId) {
+      setTimeout(() => {
+        const row = document.getElementById('row-user-' + userId);
+        if (row) {
+          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          row.classList.add('ring-2', 'ring-amber-400', 'bg-amber-500/25');
+          setTimeout(() => {
+            row.classList.remove('ring-2', 'ring-amber-400', 'bg-amber-500/25');
+          }, 4000);
+        }
+      }, 250);
+    }
 
     // Check Auth State on load
     window.addEventListener('DOMContentLoaded', () => {
@@ -680,6 +1130,7 @@
     });
 
     function showLoginScreen() {
+      stopAdminRealtimeMonitor();
       document.getElementById('screen-admin-login').classList.remove('hidden');
       document.getElementById('app-admin-dashboard').classList.add('hidden');
     }
@@ -688,6 +1139,7 @@
       document.getElementById('screen-admin-login').classList.add('hidden');
       document.getElementById('app-admin-dashboard').classList.remove('hidden');
       fetchLatestData();
+      startAdminRealtimeMonitor();
     }
 
     function handleAdminLogin(e) {
@@ -746,6 +1198,7 @@
     }
 
     function handleAdminLogout() {
+      stopAdminRealtimeMonitor();
       localStorage.removeItem('tatadana_admin_session');
       showToast('Keluar', 'Sesi Super Admin telah diakhiri.', 'info');
       showLoginScreen();
@@ -760,6 +1213,9 @@
           if (data.success && Array.isArray(data.users)) {
             usersList = data.users;
             renderAllAdminViews();
+            const pendingUsers = usersList.filter(u => u.status === 'pending');
+            updateStickyBanner(pendingUsers);
+            updateNotificationDropdown(pendingUsers);
           }
         })
         .catch(err => {
@@ -947,7 +1403,8 @@
         }
 
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-850 transition-colors';
+        tr.id = 'row-user-' + u.id;
+        tr.className = `hover:bg-slate-850 transition-all ${u.status === 'pending' ? 'bg-amber-500/10 border-l-4 border-amber-400 shadow-sm' : ''}`;
         tr.innerHTML = `
           <td class="px-4 py-3 font-mono font-bold text-sky-400">${u.id}</td>
           <td class="px-4 py-3 font-bold text-white">
@@ -963,7 +1420,11 @@
           <td class="px-4 py-3">${badgeHtml}</td>
           <td class="px-4 py-3 text-right">
             <div class="flex items-center justify-end gap-1.5">
-              ${u.status !== 'approved' ? `
+              ${u.status === 'pending' ? `
+                <button onclick="approveUser('${u.id}')" class="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black px-3 py-1.5 rounded-lg text-[11px] shadow-lg transition-all flex items-center gap-1">
+                  <span>⚡</span> <span>Approve Sekarang</span>
+                </button>
+              ` : u.status !== 'approved' ? `
                 <button onclick="approveUser('${u.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] shadow transition-all flex items-center gap-1">
                   <span>✓</span> <span>Approve (Rp0)</span>
                 </button>
@@ -973,7 +1434,7 @@
                   ✕ Tolak
                 </button>
               ` : ''}
-              <a href="https://wa.me/${u.phone}?text=${encodeURIComponent('Halo ' + u.name + ', konfirmasi pendaftaran TataDana Anda telah kami proses.')}" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold px-2.5 py-1.5 rounded-lg text-[11px] border border-slate-700" title="Buka WhatsApp Pengguna">
+              <a href="https://wa.me/${u.phone}?text=${encodeURIComponent('Halo ' + u.name + ', akun TataDana Anda telah disetujui oleh Super Admin. Silakan masuk via WhatsApp OTP.')}" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold px-2.5 py-1.5 rounded-lg text-[11px] border border-slate-700" title="Buka WhatsApp Pengguna">
                 📲 WA
               </a>
             </div>
@@ -1118,9 +1579,16 @@
         if (data.success) {
           const user = usersList.find(u => u.id === userId);
           if (user) user.status = 'approved';
+          playSuccessChime();
           addAuditLog('Approve User', `Akun ${user ? user.name : userId} disetujui. Saldo awal disiapkan Rp0 bersih.`);
-          showToast('Pengguna Di-Approve ✓', `Akun ${user ? user.name : userId} berhasil disetujui! Pengguna kini dapat login dengan saldo awal Rp0.`, 'success');
+          showToast('Pengguna Di-Approve ✓', `Akun <b>${user ? user.name : userId}</b> berhasil disetujui! Pengguna kini dapat login dengan saldo awal Rp0 bersih.`, 'success');
           renderAllAdminViews();
+          const pendingUsers = usersList.filter(u => u.status === 'pending');
+          updateStickyBanner(pendingUsers);
+          updateNotificationDropdown(pendingUsers);
+          if (currentAlertUserId === userId) {
+            dismissRealtimeAlert();
+          }
         }
       });
     }
@@ -1224,7 +1692,7 @@
     }
 
     function simulateNewUserRegistration() {
-      const names = ['Dimas Saputra', 'Anisa Rahmawati', 'Kevin Sanjaya', 'Fajar Pratama', 'Nadia Putri'];
+      const names = ['Dimas Saputra', 'Anisa Rahmawati', 'Kevin Sanjaya', 'Fajar Pratama', 'Nadia Putri', 'Bagus Ramadhan'];
       const randName = names[Math.floor(Math.random() * names.length)];
       const randPhone = '0813' + Math.floor(10000000 + Math.random() * 90000000);
 
@@ -1243,9 +1711,15 @@
       .then(data => {
         if (data.success) {
           usersList.unshift(data.user);
+          knownPendingIds.add(data.user.id);
+          playAdminNotificationChime();
+          showRealtimeAlertCard(data.user);
           addAuditLog('Registrasi User Baru', `Pendaftar baru ${randName} (${data.user.id}) masuk status Pending.`);
-          showToast('Pendaftar Baru Masuk', `Pendaftar <b>${randName}</b> (${data.user.id}) menunggu approval WhatsApp.`, 'info');
+          showToast('🔔 Pendaftar Baru Masuk!', `Pendaftar <b>${randName}</b> (${data.user.id}) menunggu approval Super Admin.`, 'info');
           renderAllAdminViews();
+          const pendingUsers = usersList.filter(u => u.status === 'pending');
+          updateStickyBanner(pendingUsers);
+          updateNotificationDropdown(pendingUsers);
         }
       });
     }
