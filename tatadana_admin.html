@@ -149,10 +149,14 @@
 
       <!-- Right Profile, Sound Toggle, Notification Bell & Logout -->
       <div class="flex items-center gap-2.5">
-        <!-- Audio Chime Toggle -->
+        <!-- Audio Chime Toggle & Test -->
         <button id="btn-sound-toggle" onclick="toggleAdminSound()" class="px-2.5 py-1.5 rounded-xl bg-[#0d162d] border border-amber-500/30 text-amber-300 hover:text-white transition-all text-xs flex items-center gap-1.5 shadow" title="Aktifkan/Nonaktifkan Suara Notifikasi">
           <span id="icon-sound-status">🔔</span>
           <span class="hidden md:inline text-[10px] font-bold" id="label-sound-status">Suara: ON</span>
+        </button>
+        <button onclick="testNotificationChime()" class="px-2 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold transition-all flex items-center gap-1 shadow" title="Tes Bunyi Chime Notifikasi">
+          <span>🔊</span>
+          <span class="hidden lg:inline text-[10px]">Tes Suara</span>
         </button>
 
         <!-- Notification Bell & Dropdown Drawer -->
@@ -615,11 +619,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               <div>
                 <label class="block font-bold text-slate-300 mb-1">Username Bot Telegram</label>
-                <input id="input-admin-tg-username" type="text" placeholder="Contoh: TataDanaFinBot" class="w-full bg-[#070b14] border border-slate-700 text-white px-3 py-2.5 rounded-xl font-mono focus:border-sky-400 focus:outline-none">
+                <input id="input-admin-tg-username" type="text" placeholder="Contoh: TataDanaAPP_bot" class="w-full bg-[#070b14] border border-slate-700 text-white px-3 py-2.5 rounded-xl font-mono focus:border-sky-400 focus:outline-none">
               </div>
               <div>
                 <label class="block font-bold text-slate-300 mb-1">Link Langsung Pengguna (t.me)</label>
-                <input id="input-admin-tg-link" type="text" placeholder="https://t.me/TataDanaFinBot" class="w-full bg-[#070b14] border border-slate-700 text-white px-3 py-2.5 rounded-xl font-mono focus:border-sky-400 focus:outline-none">
+                <input id="input-admin-tg-link" type="text" placeholder="https://t.me/TataDanaAPP_bot" class="w-full bg-[#070b14] border border-slate-700 text-white px-3 py-2.5 rounded-xl font-mono focus:border-sky-400 focus:outline-none">
               </div>
             </div>
 
@@ -806,14 +810,43 @@
       if (label) label.innerText = soundEnabled ? 'Suara: ON' : 'Suara: OFF';
     }
 
+    // Shared Web Audio Context & Auto-Unlock Engine
+    let adminAudioCtx = null;
+    function getAdminAudioContext() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return null;
+        if (!adminAudioCtx) {
+          adminAudioCtx = new AudioContextClass();
+        }
+        if (adminAudioCtx.state === 'suspended') {
+          adminAudioCtx.resume().catch(() => {});
+        }
+        return adminAudioCtx;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function unlockAudioContext() {
+      const ctx = getAdminAudioContext();
+      if (ctx && ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+    }
+    ['click', 'touchstart', 'keydown'].forEach(evt => {
+      window.addEventListener(evt, unlockAudioContext, { passive: true });
+    });
+
     // Elegant Web Audio API Synth Chimes (Zero external files needed)
     function playAdminNotificationChime() {
       if (!soundEnabled) return;
       try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
-        const ctx = new AudioContext();
-        if (ctx.state === 'suspended') ctx.resume();
+        const ctx = getAdminAudioContext();
+        if (!ctx) return;
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
         const now = ctx.currentTime;
         
         // Note 1: E5 (659.25 Hz)
@@ -859,10 +892,11 @@
     function playSuccessChime() {
       if (!soundEnabled) return;
       try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
-        const ctx = new AudioContext();
-        if (ctx.state === 'suspended') ctx.resume();
+        const ctx = getAdminAudioContext();
+        if (!ctx) return;
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
         const now = ctx.currentTime;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -878,12 +912,112 @@
       } catch (e) {}
     }
 
+    function testNotificationChime() {
+      unlockAudioContext();
+      if (!soundEnabled) {
+        soundEnabled = true;
+        localStorage.setItem('tatadana_admin_sound', 'true');
+        updateSoundButtonUI();
+      }
+      playAdminNotificationChime();
+      showToast('🔊 Tes Bunyi Chime Notifikasi', 'Chime notifikasi real-time pendaftar baru berbunyi!', 'info');
+    }
+
+    // Tab Title Blinking & Desktop Notifications
+    let originalDocTitle = document.title;
+    let titleBlinkTimer = null;
+    function startTitleBlink(text) {
+      if (titleBlinkTimer) clearInterval(titleBlinkTimer);
+      let isAlt = false;
+      titleBlinkTimer = setInterval(() => {
+        document.title = isAlt ? text : originalDocTitle;
+        isAlt = !isAlt;
+      }, 900);
+    }
+
+    function stopTitleBlink() {
+      if (titleBlinkTimer) {
+        clearInterval(titleBlinkTimer);
+        titleBlinkTimer = null;
+        document.title = originalDocTitle;
+      }
+    }
+    window.addEventListener('focus', stopTitleBlink);
+
+    function sendDesktopNotification(title, body) {
+      try {
+        if ('Notification' in window) {
+          if (Notification.permission === 'granted') {
+            new Notification(title, {
+              body: body,
+              icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🔔</text></svg>'
+            });
+          } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission();
+          }
+        }
+      } catch (e) {}
+    }
+
+    // Real-Time Notification & Polling Engine State
+    let adminEventSource = null;
+
     function startAdminRealtimeMonitor() {
       if (adminRealtimeTimer) clearInterval(adminRealtimeTimer);
       updateSoundButtonUI();
-      // Fast polling every 2.5 seconds (2500ms)
+
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().catch(() => {});
+      }
+
+      // Connect SSE for instant push (<50ms)
+      connectAdminSse();
+
+      // Fast polling every 2.5 seconds (2500ms) as reliable fallback
       adminRealtimeTimer = setInterval(pollAdminRealtime, 2500);
       pollAdminRealtime();
+    }
+
+    function connectAdminSse() {
+      if (adminEventSource) {
+        try { adminEventSource.close(); } catch(e){}
+        adminEventSource = null;
+      }
+      if (!window.EventSource) return;
+
+      try {
+        adminEventSource = new EventSource('/api/admin/events');
+        adminEventSource.onmessage = (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            if (!data || data.type === 'connected') return;
+
+            if (data.type === 'new_pending_user') {
+              const u = data.user;
+              if (u && !knownPendingIds.has(u.id)) {
+                knownPendingIds.add(u.id);
+                handleNewPendingAlert(u);
+              }
+              fetchLatestData();
+              pollAdminRealtime();
+            } else if (data.type === 'user_approved') {
+              if (currentAlertUserId === data.user?.id) {
+                dismissRealtimeAlert();
+              }
+              fetchLatestData();
+              pollAdminRealtime();
+            }
+          } catch (err) {
+            console.log('Admin SSE parse err:', err);
+          }
+        };
+
+        adminEventSource.onerror = () => {
+          // EventSource auto-reconnects, fallback polling keeps data fresh
+        };
+      } catch (err) {
+        console.log('Admin SSE connect error:', err);
+      }
     }
 
     function stopAdminRealtimeMonitor() {
@@ -891,6 +1025,33 @@
         clearInterval(adminRealtimeTimer);
         adminRealtimeTimer = null;
       }
+      if (adminEventSource) {
+        try { adminEventSource.close(); } catch(e){}
+        adminEventSource = null;
+      }
+      stopTitleBlink();
+    }
+
+    function handleNewPendingAlert(user) {
+      // 1. Play chime audio
+      playAdminNotificationChime();
+      // 2. Show floating popup alert card with 1-click Approve
+      showRealtimeAlertCard(user);
+      // 3. Tab title blink
+      startTitleBlink(`🔔 (1) Pendaftar Baru: ${user.name}`);
+      // 4. Desktop Notification
+      sendDesktopNotification(
+        '🔔 Pendaftar Baru TataDana!',
+        `${user.name} (${user.phone}) mendaftar paket ${user.plan}. Menunggu persetujuan Super Admin.`
+      );
+      // 5. Show prominent toast
+      showToast(
+        '🔔 Ada Pengguna Baru Mendaftar!',
+        `<b>${user.name}</b> (${user.phone}) mendaftar paket <b>${user.plan}</b>. Menunggu persetujuan Super Admin!`,
+        'info'
+      );
+      // 6. Record to audit log
+      addAuditLog('Pendaftar Baru Masuk', `Pendaftar baru ${user.name} (${user.phone}) - ${user.plan} menunggu persetujuan.`);
     }
 
     function pollAdminRealtime() {
@@ -901,11 +1062,22 @@
           const currentPending = data.pendingUsers || [];
           
           if (!isInitialPollDone) {
-            // First run: register all existing pending IDs without alarm
-            currentPending.forEach(u => knownPendingIds.add(u.id));
             isInitialPollDone = true;
+            currentPending.forEach(u => knownPendingIds.add(u.id));
             updateStickyBanner(currentPending);
             updateNotificationDropdown(currentPending);
+
+            // If there are already pending users waiting when admin opens console
+            if (currentPending.length > 0) {
+              const latestUser = currentPending[0];
+              showRealtimeAlertCard(latestUser);
+              startTitleBlink(`🔔 (${currentPending.length}) Menunggu Approval`);
+              showToast(
+                'Antrean Pendaftar Menunggu',
+                `Terdapat <b>${currentPending.length}</b> calon pengguna menunggu persetujuan Super Admin.`,
+                'info'
+              );
+            }
             return;
           }
 
@@ -918,22 +1090,10 @@
             }
           });
 
-          // Brand new user detected! Trigger real-time alert!
+          // Brand new user detected via polling! Trigger real-time alert!
           if (brandNewUsers.length > 0) {
             const latestUser = brandNewUsers[0];
-            // 1. Play chime audio
-            playAdminNotificationChime();
-            // 2. Show floating popup alert card with 1-click Approve
-            showRealtimeAlertCard(latestUser);
-            // 3. Show prominent toast
-            showToast(
-              '🔔 Ada Pengguna Baru Mendaftar!',
-              `<b>${latestUser.name}</b> (${latestUser.phone}) mendaftar paket <b>${latestUser.plan}</b>. Menunggu persetujuan Super Admin!`,
-              'info'
-            );
-            // 4. Record to audit log
-            addAuditLog('Pendaftar Baru Masuk', `Pendaftar baru ${latestUser.name} (${latestUser.phone}) - ${latestUser.plan} menunggu persetujuan.`);
-            // 5. Refresh data list smoothly
+            handleNewPendingAlert(latestUser);
             fetchLatestData();
           }
 
@@ -1239,9 +1399,9 @@
 
             // Telegram Bot fields
             const tgUname = document.getElementById('input-admin-tg-username');
-            if (tgUname && !tgUname.value) tgUname.value = data.config.telegramBotUsername || 'TataDanaFinBot';
+            if (tgUname && !tgUname.value) tgUname.value = data.config.telegramBotUsername || 'TataDanaAPP_bot';
             const tgLink = document.getElementById('input-admin-tg-link');
-            if (tgLink && !tgLink.value) tgLink.value = data.config.telegramBotLink || 'https://t.me/TataDanaFinBot';
+            if (tgLink && !tgLink.value) tgLink.value = data.config.telegramBotLink || 'https://t.me/TataDanaAPP_bot';
             const badge = document.getElementById('badge-tg-polling-status');
             if (badge) {
               if (data.config.telegramPolling) {

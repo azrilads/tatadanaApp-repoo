@@ -1322,7 +1322,7 @@
         </div>
       </div>
       <div class="flex items-center gap-1.5">
-        <a href="https://t.me/TataDanaFinBot" id="link-direct-telegram-float" target="_blank" class="px-2.5 py-1 bg-sky-500 hover:bg-sky-400 text-slate-950 font-black rounded-xl text-[10px] flex items-center gap-1 shadow transition-all" title="Buka aplikasi Telegram langsung">
+        <a href="https://t.me/TataDanaAPP_bot" id="link-direct-telegram-float" target="_blank" class="px-2.5 py-1 bg-sky-500 hover:bg-sky-400 text-slate-950 font-black rounded-xl text-[10px] flex items-center gap-1 shadow transition-all" title="Buka aplikasi Telegram langsung">
           <span>Telegram ↗</span>
         </a>
         <button onclick="toggleFloatingBot()" class="p-1.5 text-slate-400 hover:text-white rounded-xl transition-colors">
@@ -2190,10 +2190,76 @@
         .catch(err => console.log('Auto-upgrade sync log:', err));
     }
 
-    // Real-Time Sync Poller: Menangkap transaksi dari Telegram Bot seketika 100% tanpa reload!
+    let userEventSource = null;
+
+    // Real-Time Sync: Menangkap mutasi dari Telegram Bot seketika 100% via SSE (<50ms) + 1s fast polling backup
     function startBackgroundServerSync() {
       if (userSyncPollInterval) clearInterval(userSyncPollInterval);
+      if (userEventSource) {
+        try { userEventSource.close(); } catch(e){}
+        userEventSource = null;
+      }
 
+      // 1. Instant Real-Time Push via Server-Sent Events (SSE)
+      if (window.EventSource && currentUser && (currentUser.phone || currentUser.id)) {
+        try {
+          const userKey = currentUser.phone || currentUser.id;
+          userEventSource = new EventSource(`/api/user/events?phone=${encodeURIComponent(userKey)}`);
+          userEventSource.onmessage = (e) => {
+            try {
+              const data = JSON.parse(e.data);
+              if (!data || data.type === 'connected') return;
+
+              if (data.type === 'transaction_added') {
+                if (data.wallets) {
+                  wallets = Object.assign({}, data.wallets);
+                }
+                if (data.user && Array.isArray(data.user.transactions)) {
+                  transactionHistory = data.user.transactions;
+                } else if (data.transaction) {
+                  if (!transactionHistory.some(t => t.id === data.transaction.id)) {
+                    transactionHistory.unshift(data.transaction);
+                  }
+                }
+                mutationCount = transactionHistory.length;
+                currentUser.wallets = wallets;
+                currentUser.transactions = transactionHistory;
+                currentUser.isNewUser = false;
+                localStorage.setItem('tatadana_user_session', JSON.stringify(currentUser));
+
+                updateAllUserUI();
+                renderAllChats();
+
+                const tx = data.transaction;
+                if (tx) {
+                  showToast(
+                    'Telegram Real-Time ⚡',
+                    `Mutasi baru: <b>${tx.note}</b> (${formatRupiah(tx.amount)})<br>Saldo dompet <b>${tx.wallet}</b> langsung terupdate!`,
+                    tx.type === 'expense' ? 'expense' : 'success'
+                  );
+                }
+              } else if (data.type === 'account_approved') {
+                if (data.user) {
+                  currentUser = Object.assign({}, currentUser, data.user);
+                  currentUser.status = 'approved';
+                  localStorage.setItem('tatadana_user_session', JSON.stringify(currentUser));
+                  updateAllUserUI();
+                }
+              }
+            } catch (err) {
+              console.log('User SSE parse err:', err);
+            }
+          };
+
+          userEventSource.onerror = () => {
+            // Polling handles synchronization during temporary network drops
+          };
+        } catch (err) {
+          console.log('User SSE connect err:', err);
+        }
+      }
+
+      // 2. Resilient Poller: 1000ms (1 detik) sebagai safety net
       const performSync = () => {
         if (!currentUser || (!currentUser.id && !currentUser.phone) || isSyncing) return;
         isSyncing = true;
@@ -2221,6 +2287,7 @@
                 if (remote.status) currentUser.status = remote.status;
                 currentUser.wallets = wallets;
                 currentUser.transactions = transactionHistory;
+                currentUser.isNewUser = (transactionHistory.length === 0 && Object.values(wallets).every(v => v === 0));
 
                 localStorage.setItem('tatadana_user_session', JSON.stringify(currentUser));
                 updateAllUserUI();
@@ -2252,6 +2319,10 @@
         clearInterval(userSyncPollInterval);
         userSyncPollInterval = null;
       }
+      if (userEventSource) {
+        try { userEventSource.close(); } catch(e){}
+        userEventSource = null;
+      }
     }
 
     function showUserPortal() {
@@ -2271,8 +2342,38 @@
       if (dash) dash.classList.remove('hidden');
     }
 
+    function migrateLocalUserSchema(u) {
+      if (!u || typeof u !== 'object') return u;
+      const defaultWallets = {
+        'BCA Payroll': 0,
+        'Mandiri Tabungan': 0,
+        'GoPay': 0,
+        'Dompet Cash': 0
+      };
+
+      if (!u.wallets || typeof u.wallets !== 'object') {
+        u.wallets = Object.assign({}, defaultWallets);
+      } else {
+        for (const [wKey, defVal] of Object.entries(defaultWallets)) {
+          if (u.wallets[wKey] === undefined) {
+            u.wallets[wKey] = defVal;
+          }
+        }
+      }
+
+      if (!Array.isArray(u.transactions)) {
+        u.transactions = [];
+      }
+
+      if (!u.status) u.status = 'approved';
+      if (!u.plan) u.plan = 'TataDana Starter';
+      return u;
+    }
+
     function enterUserDashboard(user, showToastMsg = true) {
+      stopPendingAutoCheck();
       if (user) {
+        user = migrateLocalUserSchema(user);
         if (user.id === 'USR-BUDI-01' || user.phone === '081234567890') {
           switchToDemoUser();
         } else {
@@ -2492,6 +2593,9 @@
           const waAdminLink = data.adminWaLink || `https://wa.me/${currentAdminWa}?text=${encodeURIComponent('Halo Super Admin TataDana, saya ingin verifikasi pendaftaran akun ' + user.name + ' (' + user.id + ').')}`;
           document.getElementById('btn-portal-send-wa-admin').href = waAdminLink;
 
+          // Auto-listen to Super Admin approval live via SSE and fast poller
+          startPendingAutoCheck(user.phone, user.id);
+
           showToast(
             'Pendaftaran Berhasil Dicatat! 🔔',
             'Data tersimpan dengan status <b>PENDING</b>. Notifikasi telah dikirimkan secara real-time ke Dashboard Super Admin untuk segera di-approve.',
@@ -2504,7 +2608,57 @@
       });
     }
 
+    let pendingAutoPollTimer = null;
+    let pendingSse = null;
+
+    function startPendingAutoCheck(phone, id) {
+      stopPendingAutoCheck();
+
+      // Instant approval push via SSE (<50ms)
+      if (window.EventSource && phone) {
+        try {
+          pendingSse = new EventSource(`/api/user/events?phone=${encodeURIComponent(phone)}`);
+          pendingSse.onmessage = (e) => {
+            try {
+              const ev = JSON.parse(e.data);
+              if (ev && (ev.type === 'account_approved' || ev.status === 'approved') && ev.user) {
+                stopPendingAutoCheck();
+                showToast('Akun Disetujui! 🎉', 'Super Admin baru saja menyetujui akun Anda! Selamat datang di TataDana.', 'success');
+                enterUserDashboard(ev.user);
+              }
+            } catch (err) {}
+          };
+        } catch (e) {}
+      }
+
+      // Fast 1.5s fallback polling while user waits on the pending screen
+      pendingAutoPollTimer = setInterval(() => {
+        fetch(`/api/user-status?phone=${encodeURIComponent(phone || '')}&id=${encodeURIComponent(id || '')}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.status === 'approved' && data.user) {
+              stopPendingAutoCheck();
+              showToast('Akun Disetujui! 🎉', 'Super Admin telah menyetujui akun Anda! Mengarahkan ke dashboard...', 'success');
+              enterUserDashboard(data.user);
+            }
+          })
+          .catch(() => {});
+      }, 1500);
+    }
+
+    function stopPendingAutoCheck() {
+      if (pendingAutoPollTimer) {
+        clearInterval(pendingAutoPollTimer);
+        pendingAutoPollTimer = null;
+      }
+      if (pendingSse) {
+        try { pendingSse.close(); } catch(e){}
+        pendingSse = null;
+      }
+    }
+
     function resetPortalRegisterView() {
+      stopPendingAutoCheck();
       document.getElementById('portal-register-form-box')?.classList.remove('hidden');
       document.getElementById('portal-register-pending-box')?.classList.add('hidden');
     }
@@ -3188,7 +3342,9 @@
 
     if (!forceLogout && !forceLogin && savedUserSession) {
       try {
-        const u = JSON.parse(savedUserSession);
+        let u = JSON.parse(savedUserSession);
+        u = migrateLocalUserSchema(u);
+        localStorage.setItem('tatadana_user_session', JSON.stringify(u));
         enterUserDashboard(u, false);
       } catch (err) {
         showUserPortal();
