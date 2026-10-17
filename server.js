@@ -8,22 +8,27 @@ const USER_HTML_FILE = path.join(__dirname, 'tatadana.html');
 const ADMIN_HTML_FILE = path.join(__dirname, 'tatadana_admin.html');
 const DB_FILE = path.join(__dirname, 'users_db.json');
 const CONFIG_FILE = path.join(__dirname, 'admin_config.json');
+const TMP_DB_FILE = path.join('/tmp', 'users_db.json');
+const TMP_CONFIG_FILE = path.join('/tmp', 'admin_config.json');
 
 // Super Admin, WhatsApp Gateway & Telegram Bot Configuration (Dynamic & Persistent)
 function loadAdminConfig() {
   try {
-    if (fs.existsSync(CONFIG_FILE)) {
-      const data = fs.readFileSync(CONFIG_FILE, 'utf8');
+    if (global.__tatadana_cfg) return global.__tatadana_cfg;
+    const targetFile = fs.existsSync(TMP_CONFIG_FILE) ? TMP_CONFIG_FILE : CONFIG_FILE;
+    if (fs.existsSync(targetFile)) {
+      const data = fs.readFileSync(targetFile, 'utf8');
       const parsed = JSON.parse(data);
       if (!parsed.telegramBotUsername) parsed.telegramBotUsername = 'TataDanaAPP_bot';
       if (!parsed.telegramBotLink) parsed.telegramBotLink = 'https://t.me/TataDanaAPP_bot';
-      if (!parsed.telegramBotToken) parsed.telegramBotToken = '';
+      if (!parsed.telegramBotToken) parsed.telegramBotToken = '8866036829:AAENbshC9KvIpqfeSp9vpVd4MkXYSNcvthg';
+      global.__tatadana_cfg = parsed;
       return parsed;
     }
   } catch (err) {
     console.error('Error reading admin config:', err);
   }
-  return {
+  const defaultCfg = {
     email: 'mazrilazkia31@gmail.com',
     password: 'azkiaazril1011112',
     pin: '101112',
@@ -31,16 +36,21 @@ function loadAdminConfig() {
     waDisplay: '+62 851-7698-3196',
     telegramBotUsername: 'TataDanaAPP_bot',
     telegramBotLink: 'https://t.me/TataDanaAPP_bot',
-    telegramBotToken: ''
+    telegramBotToken: '8866036829:AAENbshC9KvIpqfeSp9vpVd4MkXYSNcvthg'
   };
+  global.__tatadana_cfg = defaultCfg;
+  return defaultCfg;
 }
 
 let ADMIN_CONFIG = loadAdminConfig();
 
 function saveAdminConfig(cfg) {
   try {
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2), 'utf8');
+    const jsonStr = JSON.stringify(cfg, null, 2);
+    try { fs.writeFileSync(CONFIG_FILE, jsonStr, 'utf8'); } catch(e){}
+    try { fs.writeFileSync(TMP_CONFIG_FILE, jsonStr, 'utf8'); } catch(e){}
     ADMIN_CONFIG = cfg;
+    global.__tatadana_cfg = cfg;
     return true;
   } catch (err) {
     console.error('Error writing admin config:', err);
@@ -86,13 +96,18 @@ function migrateUserSchema(u) {
 // Helper to read DB with automatic legacy schema migration
 function readDb() {
   try {
-    if (fs.existsSync(DB_FILE)) {
-      const data = fs.readFileSync(DB_FILE, 'utf8');
+    if (global.__tatadana_db && Array.isArray(global.__tatadana_db) && global.__tatadana_db.length > 0) {
+      return global.__tatadana_db;
+    }
+    const targetFile = fs.existsSync(TMP_DB_FILE) ? TMP_DB_FILE : DB_FILE;
+    if (fs.existsSync(targetFile)) {
+      const data = fs.readFileSync(targetFile, 'utf8');
       const parsed = JSON.parse(data);
       if (Array.isArray(parsed)) {
         parsed.forEach(migrateUserSchema);
+        global.__tatadana_db = parsed;
+        return parsed;
       }
-      return parsed;
     }
   } catch (err) {
     console.error('Error reading DB:', err);
@@ -105,8 +120,11 @@ function writeDb(data) {
   try {
     if (Array.isArray(data)) {
       data.forEach(migrateUserSchema);
+      global.__tatadana_db = data;
     }
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
+    const jsonStr = JSON.stringify(data, null, 2);
+    try { fs.writeFileSync(DB_FILE, jsonStr, 'utf8'); } catch(e){}
+    try { fs.writeFileSync(TMP_DB_FILE, jsonStr, 'utf8'); } catch(e){}
     return true;
   } catch (err) {
     console.error('Error writing DB:', err);
@@ -1055,16 +1073,22 @@ async function handleTelegramUpdate(update) {
 
 
 async function startTelegramPolling() {
+  if (process.env.VERCEL) return;
   if (telegramPollingActive) return;
   if (!ADMIN_CONFIG.telegramBotToken) return;
-  telegramPollingActive = true;
-  console.log('[Telegram Bot] Initializing Telegram long polling worker...');
   try {
-    // Delete any active webhook first to avoid 409 Conflict
+    const whInfo = await telegramApiRequest('getWebhookInfo', {});
+    if (whInfo && whInfo.ok && whInfo.result && whInfo.result.url && whInfo.result.url.includes('vercel.app')) {
+      console.log('[Telegram Bot] Production Webhook active on Vercel:', whInfo.result.url);
+      telegramPollingActive = false;
+      return;
+    }
     await telegramApiRequest('deleteWebhook', { drop_pending_updates: false });
   } catch (e) {
-    console.warn('[Telegram Bot] deleteWebhook notice:', e.message);
+    console.warn('[Telegram Bot] Webhook check notice:', e.message);
   }
+  telegramPollingActive = true;
+  console.log('[Telegram Bot] Initializing Telegram long polling worker...');
   pollTelegramUpdates();
 }
 
@@ -1095,7 +1119,26 @@ async function pollTelegramUpdates() {
   setTimeout(pollTelegramUpdates, 1500);
 }
 
+
+let webhookEnsured = false;
+async function ensureTelegramWebhook(host) {
+  if (webhookEnsured) return;
+  if (!ADMIN_CONFIG.telegramBotToken) return;
+  const currentHost = host || 'tatadana-app-repoo-nhks.vercel.app';
+  if (!currentHost.includes('vercel.app')) return;
+  webhookEnsured = true;
+  const targetWebhookUrl = 'https://' + currentHost + '/api/telegram/webhook';
+  try {
+    const info = await telegramApiRequest('getWebhookInfo', {});
+    if (!info || !info.ok || !info.result || info.result.url !== targetWebhookUrl) {
+      await telegramApiRequest('setWebhook', { url: targetWebhookUrl });
+      console.log('[Telegram Bot] Webhook auto-configured to:', targetWebhookUrl);
+    }
+  } catch (e) {}
+}
+
 const server = http.createServer(async (req, res) => {
+  ensureTelegramWebhook(req.headers.host);
   // CORS & Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -1792,7 +1835,7 @@ const server = http.createServer(async (req, res) => {
         res.end('Error loading TataDana Admin Console: ' + err.message);
         return;
       }
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
       res.end(data);
     });
     return;
@@ -1805,7 +1848,7 @@ const server = http.createServer(async (req, res) => {
       res.end('Error loading TataDana application: ' + err.message);
       return;
     }
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
     res.end(data);
   });
 });
