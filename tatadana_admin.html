@@ -74,6 +74,15 @@
         </div>
       </div>
 
+      <!-- Live Pending Alert on Login Screen -->
+      <div id="login-screen-pending-box" class="hidden bg-rose-950/80 border border-rose-500/60 rounded-2xl p-3.5 space-y-1.5 text-xs animate-pulse shadow-lg">
+        <div class="flex items-center justify-between text-rose-300 font-bold">
+          <span class="flex items-center gap-1.5"><span>🔔</span> <span>Ada Pendaftar Menunggu Approval!</span></span>
+          <span class="bg-rose-500 text-white px-2 py-0.5 rounded-full text-[10px] font-black font-mono" id="login-pending-count">0</span>
+        </div>
+        <p class="text-[11px] text-slate-300" id="login-pending-desc">Calon pengguna sedang menunggu verifikasi Super Admin.</p>
+      </div>
+
       <!-- Login Form -->
       <form onsubmit="handleAdminLogin(event)" class="space-y-3 text-xs">
         <div>
@@ -812,6 +821,67 @@
 
     // Shared Web Audio Context & Auto-Unlock Engine
     let adminAudioCtx = null;
+    let cachedAdminChimeWavUri = null;
+
+    // Self-contained Offline Base64 WAV Chime Synthesizer (Zero network dependencies, 100% reliable)
+    function generateChimeWavDataUri() {
+      if (cachedAdminChimeWavUri) return cachedAdminChimeWavUri;
+      try {
+        const sampleRate = 22050;
+        const duration = 0.85;
+        const numSamples = Math.floor(sampleRate * duration);
+        const buffer = new ArrayBuffer(44 + numSamples * 2);
+        const view = new DataView(buffer);
+
+        // RIFF chunk descriptor
+        view.setUint32(0, 0x52494646, false); // 'RIFF'
+        view.setUint32(4, 36 + numSamples * 2, true);
+        view.setUint32(8, 0x57415645, false); // 'WAVE'
+        // 'fmt ' sub-chunk
+        view.setUint32(12, 0x666d7420, false);
+        view.setUint32(16, 16, true); // 16 for PCM
+        view.setUint16(20, 1, true); // PCM = 1
+        view.setUint16(22, 1, true); // Mono = 1
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true); // 16-bit
+        // 'data' sub-chunk
+        view.setUint32(36, 0x64617461, false);
+        view.setUint32(40, numSamples * 2, true);
+
+        for (let i = 0; i < numSamples; i++) {
+          const t = i / sampleRate;
+          let sample = 0;
+          // Note 1: E5 (659Hz, 0-0.35s)
+          if (t >= 0 && t < 0.35) {
+            sample += 0.3 * Math.sin(2 * Math.PI * 659.25 * t) * Math.exp(-9 * t);
+          }
+          // Note 2: G#5 (830Hz, 0.12-0.55s)
+          if (t >= 0.12 && t < 0.55) {
+            sample += 0.35 * Math.sin(2 * Math.PI * 830.61 * (t - 0.12)) * Math.exp(-8 * (t - 0.12));
+          }
+          // Note 3: B5 (987Hz, 0.24-0.85s)
+          if (t >= 0.24 && t < 0.85) {
+            sample += 0.45 * Math.sin(2 * Math.PI * 987.77 * (t - 0.24)) * Math.exp(-6 * (t - 0.24));
+          }
+          sample = Math.max(-1, Math.min(1, sample));
+          view.setInt16(44 + i * 2, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+        }
+
+        let binary = '';
+        const bytes = new Uint8Array(buffer);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        cachedAdminChimeWavUri = 'data:audio/wav;base64,' + btoa(binary);
+        return cachedAdminChimeWavUri;
+      } catch (e) {
+        return null;
+      }
+    }
+
     function getAdminAudioContext() {
       try {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -838,54 +908,71 @@
       window.addEventListener(evt, unlockAudioContext, { passive: true });
     });
 
-    // Elegant Web Audio API Synth Chimes (Zero external files needed)
+    // Dual-Engine Audio Chimes (Web Audio API Synth + Native HTML5 Audio WAV Fallback)
     function playAdminNotificationChime() {
       if (!soundEnabled) return;
+
+      // Primary: Web Audio API Synth
+      let webAudioSucceeded = false;
       try {
         const ctx = getAdminAudioContext();
-        if (!ctx) return;
-        if (ctx.state === 'suspended') {
-          ctx.resume().catch(() => {});
+        if (ctx) {
+          if (ctx.state === 'suspended') {
+            ctx.resume().catch(() => {});
+          }
+          const now = ctx.currentTime;
+          
+          // Note 1: E5 (659.25 Hz)
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(659.25, now);
+          gain1.gain.setValueAtTime(0.25, now);
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc1.connect(gain1);
+          gain1.connect(ctx.destination);
+          osc1.start(now);
+          osc1.stop(now + 0.35);
+
+          // Note 2: G#5 (830.61 Hz)
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(830.61, now + 0.12);
+          gain2.gain.setValueAtTime(0.3, now + 0.12);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+          osc2.start(now + 0.12);
+          osc2.stop(now + 0.5);
+
+          // Note 3: B5 (987.77 Hz)
+          const osc3 = ctx.createOscillator();
+          const gain3 = ctx.createGain();
+          osc3.type = 'sine';
+          osc3.frequency.setValueAtTime(987.77, now + 0.24);
+          gain3.gain.setValueAtTime(0.35, now + 0.24);
+          gain3.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+          osc3.connect(gain3);
+          gain3.connect(ctx.destination);
+          osc3.start(now + 0.24);
+          osc3.stop(now + 0.85);
+          webAudioSucceeded = true;
         }
-        const now = ctx.currentTime;
-        
-        // Note 1: E5 (659.25 Hz)
-        const osc1 = ctx.createOscillator();
-        const gain1 = ctx.createGain();
-        osc1.type = 'sine';
-        osc1.frequency.setValueAtTime(659.25, now);
-        gain1.gain.setValueAtTime(0.25, now);
-        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-        osc1.connect(gain1);
-        gain1.connect(ctx.destination);
-        osc1.start(now);
-        osc1.stop(now + 0.35);
-
-        // Note 2: G#5 (830.61 Hz)
-        const osc2 = ctx.createOscillator();
-        const gain2 = ctx.createGain();
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(830.61, now + 0.12);
-        gain2.gain.setValueAtTime(0.3, now + 0.12);
-        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-        osc2.connect(gain2);
-        gain2.connect(ctx.destination);
-        osc2.start(now + 0.12);
-        osc2.stop(now + 0.5);
-
-        // Note 3: B5 (987.77 Hz) - crisp executive chime
-        const osc3 = ctx.createOscillator();
-        const gain3 = ctx.createGain();
-        osc3.type = 'sine';
-        osc3.frequency.setValueAtTime(987.77, now + 0.24);
-        gain3.gain.setValueAtTime(0.35, now + 0.24);
-        gain3.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
-        osc3.connect(gain3);
-        gain3.connect(ctx.destination);
-        osc3.start(now + 0.24);
-        osc3.stop(now + 0.85);
       } catch (e) {
-        console.log('Audio playback error (browser policy):', e);
+        webAudioSucceeded = false;
+      }
+
+      // Secondary Fallback: HTML5 Audio Element with base64 WAV data-URI
+      if (!webAudioSucceeded) {
+        try {
+          const uri = generateChimeWavDataUri();
+          if (uri) {
+            const audio = new Audio(uri);
+            audio.volume = 0.5;
+            audio.play().catch(() => {});
+          }
+        } catch (e) {}
       }
     }
 
@@ -1066,15 +1153,17 @@
             currentPending.forEach(u => knownPendingIds.add(u.id));
             updateStickyBanner(currentPending);
             updateNotificationDropdown(currentPending);
+            updateLoginScreenPendingAlert(currentPending);
 
             // If there are already pending users waiting when admin opens console
             if (currentPending.length > 0) {
               const latestUser = currentPending[0];
+              playAdminNotificationChime();
               showRealtimeAlertCard(latestUser);
               startTitleBlink(`🔔 (${currentPending.length}) Menunggu Approval`);
               showToast(
-                'Antrean Pendaftar Menunggu',
-                `Terdapat <b>${currentPending.length}</b> calon pengguna menunggu persetujuan Super Admin.`,
+                'Antrean Pendaftar Menunggu ⏳',
+                `Terdapat <b>${currentPending.length}</b> calon pengguna (${currentPending.map(u => u.name).join(', ')}) menunggu persetujuan Super Admin.`,
                 'info'
               );
             }
@@ -1099,10 +1188,30 @@
 
           updateStickyBanner(currentPending);
           updateNotificationDropdown(currentPending);
+          updateLoginScreenPendingAlert(currentPending);
         })
         .catch(err => {
           // silently handle network jitter
         });
+    }
+
+    function updateLoginScreenPendingAlert(pendingUsers) {
+      const box = document.getElementById('login-screen-pending-box');
+      const countEl = document.getElementById('login-pending-count');
+      const descEl = document.getElementById('login-pending-desc');
+      if (!box) return;
+
+      if (pendingUsers && pendingUsers.length > 0) {
+        box.classList.remove('hidden');
+        if (countEl) countEl.innerText = pendingUsers.length;
+        if (descEl) {
+          const names = pendingUsers.slice(0, 2).map(u => u.name).join(', ');
+          const extra = pendingUsers.length > 2 ? ` (+${pendingUsers.length - 2} lainnya)` : '';
+          descEl.innerHTML = `Pendaftar <b>${names}${extra}</b> sedang menunggu approval Super Admin.`;
+        }
+      } else {
+        box.classList.add('hidden');
+      }
     }
 
     function updateStickyBanner(pendingUsers) {
@@ -1287,12 +1396,25 @@
       } else {
         showLoginScreen();
       }
+      checkPendingForLoginScreen();
     });
+
+    function checkPendingForLoginScreen() {
+      fetch('/api/admin/pending-check')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            updateLoginScreenPendingAlert(data.pendingUsers || []);
+          }
+        })
+        .catch(() => {});
+    }
 
     function showLoginScreen() {
       stopAdminRealtimeMonitor();
       document.getElementById('screen-admin-login').classList.remove('hidden');
       document.getElementById('app-admin-dashboard').classList.add('hidden');
+      checkPendingForLoginScreen();
     }
 
     function showDashboard() {
@@ -1746,9 +1868,12 @@
           const pendingUsers = usersList.filter(u => u.status === 'pending');
           updateStickyBanner(pendingUsers);
           updateNotificationDropdown(pendingUsers);
+          updateLoginScreenPendingAlert(pendingUsers);
           if (currentAlertUserId === userId) {
             dismissRealtimeAlert();
           }
+          fetchLatestData();
+          pollAdminRealtime();
         }
       });
     }

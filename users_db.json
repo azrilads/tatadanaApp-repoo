@@ -52,8 +52,7 @@
         "date": "2026-10-15",
         "source": "Telegram Real-Time"
       }
-    ],
-    "lastUpdated": 1792147653610
+    ]
   },
   {
     "id": "USR-9432",
@@ -74,8 +73,7 @@
       "GoPay": 0,
       "Dompet Cash": 0
     },
-    "transactions": [],
-    "lastUpdated": 1792147653610
+    "transactions": []
   },
   {
     "id": "USR-1781",
@@ -219,8 +217,7 @@
         "source": "Registrasi Dompet"
       }
     ],
-    "telegramChatId": 555666777,
-    "lastUpdated": 1792147653610
+    "telegramChatId": 555666777
   },
   {
     "id": "USR-2472",
@@ -240,8 +237,7 @@
       "GoPay": 0,
       "Dompet Cash": 0
     },
-    "transactions": [],
-    "lastUpdated": 1792147653610
+    "transactions": []
   },
   {
     "id": "USR-2028",
@@ -261,8 +257,7 @@
       "GoPay": 0,
       "Dompet Cash": 0
     },
-    "transactions": [],
-    "lastUpdated": 1792147653610
+    "transactions": []
   },
   {
     "id": "USR-3219",
@@ -282,8 +277,7 @@
       "GoPay": 0,
       "Dompet Cash": 0
     },
-    "transactions": [],
-    "lastUpdated": 1792147653610
+    "transactions": []
   },
   {
     "id": "USR-1073",
@@ -294,27 +288,16 @@
     "price": 99000,
     "registeredAt": "15 Okt 2026, 16:57 WIB",
     "status": "approved",
-    "isNewUser": false,
+    "isNewUser": true,
     "premiumUpgradePending": false,
     "notes": "Pendaftaran via web (TataDana Pro Lifetime)",
     "wallets": {
-      "BCA Payroll": 2000000,
+      "BCA Payroll": 5000000,
       "Mandiri Tabungan": 0,
       "GoPay": 500000,
       "Dompet Cash": 0
     },
     "transactions": [
-      {
-        "id": 1792147677775,
-        "type": "expense",
-        "amount": 3000000,
-        "wallet": "BCA Payroll",
-        "note": "bayar ukt 3jt",
-        "category": "🛍️ Belanja Harian",
-        "time": "16 Okt 2026, 17:47 WIB",
-        "date": "2026-10-16",
-        "source": "Telegram Real-Time"
-      },
       {
         "id": 1792062573577,
         "type": "expense",
@@ -348,9 +331,7 @@
         "date": "2026-10-15",
         "source": "Telegram Real-Time"
       }
-    ],
-    "lastUpdated": 1792147677780,
-    "telegramChatId": 7684869990
+    ]
   },
   {
     "id": "USR-4514",
@@ -370,8 +351,7 @@
       "GoPay": 0,
       "Dompet Cash": 0
     },
-    "transactions": [],
-    "lastUpdated": 1792147653610
+    "transactions": []
   },
   {
     "id": "USR-BUDI-01",
@@ -389,9 +369,7 @@
       "Mandiri Tabungan": 15400000,
       "GoPay": 320000,
       "Dompet Cash": 450000
-    },
-    "transactions": [],
-    "lastUpdated": 1792147653610
+    }
   },
   {
     "id": "USR-2026-9041",
@@ -410,9 +388,7 @@
       "Mandiri Tabungan": 0,
       "GoPay": 0,
       "Dompet Cash": 0
-    },
-    "transactions": [],
-    "lastUpdated": 1792147653611
+    }
   },
   {
     "id": "USR-2026-8812",
@@ -430,11 +406,7 @@
     "notes": "Menunggu verifikasi pembayaran PRO Rp99.000",
     "wallets": {
       "BCA Payroll": 0,
-      "GoPay": 0,
-      "Mandiri Tabungan": 0,
-      "Dompet Cash": 0
-    },
-    "transactions": [],
-    "lastUpdated": 1792147653611
+      "GoPay": 0
+    }
   }
 ]

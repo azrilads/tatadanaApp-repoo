@@ -9,6 +9,7 @@ const ADMIN_HTML_FILE = path.join(__dirname, 'tatadana_admin.html');
 const DB_FILE = path.join(__dirname, 'users_db.json');
 const CONFIG_FILE = path.join(__dirname, 'admin_config.json');
 const TMP_DB_FILE = path.join('/tmp', 'users_db.json');
+const TMP_BACKUP_DB_FILE = path.join('/tmp', 'tatadana_backup_db.json');
 const TMP_CONFIG_FILE = path.join('/tmp', 'admin_config.json');
 
 // Super Admin, WhatsApp Gateway & Telegram Bot Configuration (Dynamic & Persistent)
@@ -93,21 +94,25 @@ function migrateUserSchema(u) {
   return u;
 }
 
-// Helper to read DB with automatic legacy schema migration
+// Helper to read DB with automatic legacy schema migration & multi-tier resilience
 function readDb() {
   try {
     if (global.__tatadana_db && Array.isArray(global.__tatadana_db) && global.__tatadana_db.length > 0) {
       return global.__tatadana_db;
     }
-    const targetFile = fs.existsSync(TMP_DB_FILE) ? TMP_DB_FILE : DB_FILE;
-    if (fs.existsSync(targetFile)) {
-      const data = fs.readFileSync(targetFile, 'utf8');
-      const parsed = JSON.parse(data);
-      if (Array.isArray(parsed)) {
-        parsed.forEach(migrateUserSchema);
-        global.__tatadana_db = parsed;
-        return parsed;
-      }
+    const candidates = [TMP_DB_FILE, TMP_BACKUP_DB_FILE, DB_FILE];
+    for (const targetFile of candidates) {
+      try {
+        if (fs.existsSync(targetFile)) {
+          const data = fs.readFileSync(targetFile, 'utf8');
+          const parsed = JSON.parse(data);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            parsed.forEach(migrateUserSchema);
+            global.__tatadana_db = parsed;
+            return parsed;
+          }
+        }
+      } catch (err) {}
     }
   } catch (err) {
     console.error('Error reading DB:', err);
@@ -115,7 +120,7 @@ function readDb() {
   return [];
 }
 
-// Helper to write DB
+// Helper to write DB with multi-tier persistence
 function writeDb(data) {
   try {
     if (Array.isArray(data)) {
@@ -125,6 +130,7 @@ function writeDb(data) {
     const jsonStr = JSON.stringify(data, null, 2);
     try { fs.writeFileSync(DB_FILE, jsonStr, 'utf8'); } catch(e){}
     try { fs.writeFileSync(TMP_DB_FILE, jsonStr, 'utf8'); } catch(e){}
+    try { fs.writeFileSync(TMP_BACKUP_DB_FILE, jsonStr, 'utf8'); } catch(e){}
     return true;
   } catch (err) {
     console.error('Error writing DB:', err);
@@ -269,22 +275,61 @@ function formatRupiahServer(num) {
 }
 
 function getNowWIBServer() {
-  const d = new Date();
-  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-  const day = String(d.getDate()).padStart(2, '0');
-  const mon = months[d.getMonth()];
-  const yr = d.getFullYear();
-  const hr = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
-  return `${day} ${mon} ${yr}, ${hr}:${min} WIB`;
+  try {
+    const d = new Date();
+    const formatter = new Intl.DateTimeFormat('id-ID', {
+      timeZone: 'Asia/Jakarta',
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    const parts = formatter.formatToParts(d);
+    let day = '', month = '', year = '', hour = '', minute = '', second = '';
+    for (const p of parts) {
+      if (p.type === 'day') day = p.value;
+      if (p.type === 'month') month = p.value;
+      if (p.type === 'year') year = p.value;
+      if (p.type === 'hour') hour = p.value;
+      if (p.type === 'minute') minute = p.value;
+      if (p.type === 'second') second = p.value;
+    }
+    return `${day} ${month} ${year}, ${hour}:${minute}:${second} WIB`;
+  } catch (e) {
+    const now = new Date();
+    const wib = new Date(now.getTime() + (7 * 60 + now.getTimezoneOffset()) * 60000);
+    const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    const day = String(wib.getDate()).padStart(2, '0');
+    const mon = months[wib.getMonth()];
+    const yr = wib.getFullYear();
+    const hr = String(wib.getHours()).padStart(2, '0');
+    const min = String(wib.getMinutes()).padStart(2, '0');
+    const sec = String(wib.getSeconds()).padStart(2, '0');
+    return `${day} ${mon} ${yr}, ${hr}:${min}:${sec} WIB`;
+  }
 }
 
 function getTodayYMDServer() {
-  const d = new Date();
-  const yr = d.getFullYear();
-  const mo = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${yr}-${mo}-${day}`;
+  try {
+    const d = new Date();
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Jakarta',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    return formatter.format(d);
+  } catch (e) {
+    const now = new Date();
+    const wib = new Date(now.getTime() + (7 * 60 + now.getTimezoneOffset()) * 60000);
+    const yr = wib.getFullYear();
+    const mo = String(wib.getMonth() + 1).padStart(2, '0');
+    const day = String(wib.getDate()).padStart(2, '0');
+    return `${yr}-${mo}-${day}`;
+  }
 }
 
 // Escape HTML special characters for 100% stable Telegram messaging
@@ -1236,6 +1281,7 @@ const server = http.createServer(async (req, res) => {
       let user = findUserByQuery(users, { id, phone });
 
       if (user) {
+        migrateUserSchema(user);
         res.writeHead(200);
         res.end(JSON.stringify({
           success: true,
@@ -1757,7 +1803,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // POST /api/user/sync (Sync wallets, transactions from user dashboard)
+    // POST /api/user/sync (Resilient bidirectional merge for wallets & transactions)
     if (pathname === '/api/user/sync' && req.method === 'POST') {
       const body = await parseBody(req);
       const userId = body.userId;
@@ -1765,18 +1811,86 @@ const server = http.createServer(async (req, res) => {
       const users = readDb();
       let user = findUserByQuery(users, { id: userId, phone: phone });
 
-      if (user) {
-        if (body.wallets) user.wallets = body.wallets;
-        if (body.transactions) user.transactions = body.transactions;
+      const getTxKey = (t) => {
+        if (!t) return '';
+        if (t.id) return String(t.id);
+        return `${t.wallet || ''}|${t.type || ''}|${t.amount || 0}|${t.note || ''}|${t.time || t.date || ''}`;
+      };
+
+      if (!user) {
+        // Cold start rehydration: restore user from client session so no data is ever lost
+        const newId = userId || ('USR-' + Math.floor(1000 + Math.random() * 9000));
+        user = {
+          id: newId,
+          name: body.name || 'Pengguna TataDana',
+          phone: phone || '',
+          email: body.email || '',
+          plan: body.plan || 'TataDana Pro Lifetime',
+          status: body.status || 'approved',
+          isNewUser: false,
+          premiumUpgradePending: false,
+          wallets: (body.wallets && typeof body.wallets === 'object') ? body.wallets : { 'BCA Payroll': 0, 'Mandiri Tabungan': 0, 'GoPay': 0, 'Dompet Cash': 0 },
+          transactions: Array.isArray(body.transactions) ? body.transactions : [],
+          lastUpdated: Date.now()
+        };
+        migrateUserSchema(user);
+        users.unshift(user);
+      } else {
+        migrateUserSchema(user);
+
+        // Smart merge transactions
+        if (Array.isArray(body.transactions)) {
+          const serverTxsBefore = user.transactions || [];
+          const clientTxKeys = new Set(body.transactions.map(getTxKey));
+          const serverOnlyTxs = serverTxsBefore.filter(st => !clientTxKeys.has(getTxKey(st)));
+
+          const txMap = new Map();
+          // Insert client transactions first
+          body.transactions.forEach(t => {
+            const k = getTxKey(t);
+            if (k) txMap.set(k, t);
+          });
+          // Merge server transactions (don't lose any Telegram-originating txs)
+          serverTxsBefore.forEach(t => {
+            const k = getTxKey(t);
+            if (k && !txMap.has(k)) {
+              txMap.set(k, t);
+            }
+          });
+
+          const mergedTxs = Array.from(txMap.values());
+          mergedTxs.sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0));
+          user.transactions = mergedTxs;
+
+          // Smart merge wallets
+          if (body.wallets && typeof body.wallets === 'object') {
+            const mergedWallets = Object.assign({}, user.wallets, body.wallets);
+            // Apply any server-only transactions (e.g. from Telegram while client was offline)
+            serverOnlyTxs.forEach(st => {
+              const w = st.wallet || 'BCA Payroll';
+              if (mergedWallets[w] === undefined) mergedWallets[w] = 0;
+              if (st.type === 'income' || st.type === 'topup') {
+                mergedWallets[w] += Number(st.amount || 0);
+              } else if (st.type === 'expense') {
+                mergedWallets[w] = Math.max(0, mergedWallets[w] - Number(st.amount || 0));
+              }
+            });
+            user.wallets = mergedWallets;
+          }
+        } else if (body.wallets && typeof body.wallets === 'object') {
+          user.wallets = Object.assign({}, user.wallets, body.wallets);
+        }
+
+        if (body.name && (!user.name || user.name === 'Pengguna Baru')) user.name = body.name;
+        if (body.email && !user.email) user.email = body.email;
+        if (body.plan && user.plan === 'TataDana Starter' && body.plan.includes('Pro')) user.plan = body.plan;
         if (body.isNewUser !== undefined) user.isNewUser = body.isNewUser;
         user.lastUpdated = Date.now();
-        writeDb(users);
-        res.writeHead(200);
-        res.end(JSON.stringify({ success: true, user }));
-        return;
       }
-      res.writeHead(404);
-      res.end(JSON.stringify({ success: false, message: 'User tidak ditemukan' }));
+
+      writeDb(users);
+      res.writeHead(200);
+      res.end(JSON.stringify({ success: true, user }));
       return;
     }
 

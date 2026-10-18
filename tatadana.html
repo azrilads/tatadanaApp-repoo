@@ -1439,14 +1439,61 @@
     }
 
     function getNowWIB() {
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      return `15 Okt 2026, ${hours}:${minutes} WIB`;
+      try {
+        const d = new Date();
+        const formatter = new Intl.DateTimeFormat('id-ID', {
+          timeZone: 'Asia/Jakarta',
+          year: 'numeric',
+          month: 'short',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        });
+        const parts = formatter.formatToParts(d);
+        let day = '', month = '', year = '', hour = '', minute = '', second = '';
+        for (const p of parts) {
+          if (p.type === 'day') day = p.value;
+          if (p.type === 'month') month = p.value;
+          if (p.type === 'year') year = p.value;
+          if (p.type === 'hour') hour = p.value;
+          if (p.type === 'minute') minute = p.value;
+          if (p.type === 'second') second = p.value;
+        }
+        return `${day} ${month} ${year}, ${hour}:${minute}:${second} WIB`;
+      } catch (e) {
+        const now = new Date();
+        const wib = new Date(now.getTime() + (7 * 60 + now.getTimezoneOffset()) * 60000);
+        const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+        const day = String(wib.getDate()).padStart(2, '0');
+        const mon = months[wib.getMonth()];
+        const yr = wib.getFullYear();
+        const hr = String(wib.getHours()).padStart(2, '0');
+        const min = String(wib.getMinutes()).padStart(2, '0');
+        const sec = String(wib.getSeconds()).padStart(2, '0');
+        return `${day} ${mon} ${yr}, ${hr}:${min}:${sec} WIB`;
+      }
     }
 
     function getTodayYMD() {
-      return '2026-10-15';
+      try {
+        const d = new Date();
+        const formatter = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Jakarta',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+        return formatter.format(d);
+      } catch (e) {
+        const now = new Date();
+        const wib = new Date(now.getTime() + (7 * 60 + now.getTimezoneOffset()) * 60000);
+        const yr = wib.getFullYear();
+        const mo = String(wib.getMonth() + 1).padStart(2, '0');
+        const day = String(wib.getDate()).padStart(2, '0');
+        return `${yr}-${mo}-${day}`;
+      }
     }
 
     // TOAST NOTIFIKASI
@@ -1829,27 +1876,39 @@
       );
     }
 
+    let isSyncingUserDataToServer = false;
     function syncUserDataToServer() {
-      if (currentUser && (currentUser.id || currentUser.phone)) {
-        fetch('/api/user/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: currentUser.id,
-            phone: currentUser.phone,
-            wallets: wallets,
-            transactions: transactionHistory
-          })
+      if (!currentUser || (!currentUser.id && !currentUser.phone) || isSyncingUserDataToServer) return;
+      isSyncingUserDataToServer = true;
+      fetch('/api/user/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          phone: currentUser.phone,
+          name: currentUser.name,
+          email: currentUser.email,
+          plan: currentUser.plan,
+          status: currentUser.status,
+          wallets: wallets,
+          transactions: transactionHistory
         })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.user) {
-            currentUser = Object.assign({}, currentUser, data.user);
-            localStorage.setItem('tatadana_user_session', JSON.stringify(currentUser));
-          }
-        })
-        .catch(err => console.log('Sync server log:', err.message));
-      }
+      })
+      .then(res => res.json())
+      .then(data => {
+        isSyncingUserDataToServer = false;
+        if (data.success && data.user) {
+          if (data.user.plan) currentUser.plan = data.user.plan;
+          if (data.user.status) currentUser.status = data.user.status;
+          currentUser.wallets = wallets;
+          currentUser.transactions = transactionHistory;
+          localStorage.setItem('tatadana_user_session', JSON.stringify(currentUser));
+        }
+      })
+      .catch(err => {
+        isSyncingUserDataToServer = false;
+        console.log('Sync server log:', err.message);
+      });
     }
 
     // =========================================================================
@@ -2160,7 +2219,184 @@
       unames.forEach(el => { el.innerText = '@' + currentTelegramBotUsername; });
     }
 
-    // Refresh & Auto-upgrade: Menarik data terbaru dari server dan meng-upgrade session localStorage lama
+    // Smart Transaction Fingerprint for deduplication
+    function getTxFingerprint(tx) {
+      if (!tx) return '';
+      if (tx.id) return String(tx.id);
+      return `${tx.wallet || ''}|${tx.type || ''}|${tx.amount || 0}|${tx.note || ''}|${tx.time || tx.date || ''}`;
+    }
+
+    // Smart Bidirectional Merge: Never drop local transactions or revert wallet balances!
+    function smartMergeUserWithRemote(remote, source = 'poll') {
+      if (!remote || typeof remote !== 'object' || !currentUser) return;
+
+      const remoteTxList = Array.isArray(remote.transactions) ? remote.transactions : [];
+      const remoteWallets = (remote.wallets && typeof remote.wallets === 'object') ? remote.wallets : {};
+      const localTxList = Array.isArray(transactionHistory) ? transactionHistory : [];
+
+      // Build deduplication maps
+      const localMap = new Map();
+      localTxList.forEach(t => {
+        const k = getTxFingerprint(t);
+        if (k) localMap.set(k, t);
+      });
+
+      const remoteMap = new Map();
+      remoteTxList.forEach(t => {
+        const k = getTxFingerprint(t);
+        if (k) remoteMap.set(k, t);
+      });
+
+      const remoteOnlyTxs = remoteTxList.filter(rt => !localMap.has(getTxFingerprint(rt)));
+      const localOnlyTxs = localTxList.filter(lt => !remoteMap.has(getTxFingerprint(lt)));
+
+      let stateChanged = false;
+      let serverNeedsRehydration = false;
+
+      // Status & Plan sync (e.g. approved by Super Admin)
+      if (remote.plan && remote.plan !== currentUser.plan) {
+        currentUser.plan = remote.plan;
+        stateChanged = true;
+      }
+      if (remote.status && remote.status !== currentUser.status) {
+        currentUser.status = remote.status;
+        stateChanged = true;
+      }
+      if (remote.premiumUpgradePending !== undefined && remote.premiumUpgradePending !== currentUser.premiumUpgradePending) {
+        currentUser.premiumUpgradePending = remote.premiumUpgradePending;
+        stateChanged = true;
+      }
+
+      // CASE 1: Brand new clean user on local browser (e.g. first login on this device with no local history)
+      const isFreshLocalUser = localTxList.length === 0 && Object.values(wallets).every(v => v === 0);
+      if (isFreshLocalUser && (remoteTxList.length > 0 || Object.values(remoteWallets).some(v => v > 0))) {
+        transactionHistory = JSON.parse(JSON.stringify(remoteTxList));
+        wallets = Object.assign({}, remoteWallets);
+        mutationCount = transactionHistory.length;
+        currentUser.wallets = wallets;
+        currentUser.transactions = transactionHistory;
+        currentUser.isNewUser = (transactionHistory.length === 0 && Object.values(wallets).every(v => v === 0));
+        localStorage.setItem('tatadana_user_session', JSON.stringify(currentUser));
+        updateAllUserUI();
+        renderAllChats();
+        return;
+      }
+
+      // CASE 2: Identical transactions on both sides
+      if (remoteOnlyTxs.length === 0 && localOnlyTxs.length === 0) {
+        // Both sides have identical transaction history
+        // Check if remote wallet balance was updated directly (e.g. by Super Admin)
+        const walletsDiff = JSON.stringify(wallets) !== JSON.stringify(remoteWallets);
+        if (walletsDiff && Object.keys(remoteWallets).length > 0) {
+          for (const [wName, wBal] of Object.entries(remoteWallets)) {
+            wallets[wName] = Number(wBal) || 0;
+          }
+          stateChanged = true;
+        }
+      }
+
+      // CASE 3: Server has new transactions (e.g. recorded via Telegram Bot), and local has no missing txs
+      else if (remoteOnlyTxs.length > 0 && localOnlyTxs.length === 0) {
+        remoteOnlyTxs.forEach(rt => {
+          transactionHistory.push(rt);
+        });
+        transactionHistory.sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0));
+        mutationCount = transactionHistory.length;
+
+        if (Object.keys(remoteWallets).length > 0) {
+          for (const [wName, wBal] of Object.entries(remoteWallets)) {
+            wallets[wName] = Number(wBal) || 0;
+          }
+        } else {
+          remoteOnlyTxs.forEach(rt => {
+            const w = rt.wallet || defaultBotWallet;
+            if (wallets[w] === undefined) wallets[w] = 0;
+            if (rt.type === 'income' || rt.type === 'topup') {
+              wallets[w] = (wallets[w] || 0) + Number(rt.amount || 0);
+            } else if (rt.type === 'expense') {
+              wallets[w] = Math.max(0, (wallets[w] || 0) - Number(rt.amount || 0));
+            }
+          });
+        }
+        stateChanged = true;
+
+        const newest = remoteOnlyTxs[0];
+        showToast(
+          'Telegram Real-Time ⚡',
+          `Mutasi baru: <b>${newest.note}</b> (${formatRupiah(newest.amount)})<br>Saldo dompet <b>${newest.wallet}</b> langsung terupdate!`,
+          newest.type === 'expense' ? 'expense' : 'success'
+        );
+      }
+
+      // CASE 4: Local has transactions that server lacks, and server has NO new transactions
+      // CRITICAL FIX: Server container restarted on Vercel cold boot!
+      // NEVER overwrite local transactions or wallets with stale server data!
+      else if (localOnlyTxs.length > 0 && remoteOnlyTxs.length === 0) {
+        // Keep all local transactions and wallet balances intact!
+        // Immediately rehydrate the fresh server container so it has the user's latest data:
+        serverNeedsRehydration = true;
+      }
+
+      // CASE 5: Both sides have unique transactions!
+      else if (localOnlyTxs.length > 0 && remoteOnlyTxs.length > 0) {
+        remoteOnlyTxs.forEach(rt => {
+          transactionHistory.push(rt);
+        });
+        transactionHistory.sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0));
+        mutationCount = transactionHistory.length;
+
+        // Apply mutations for remote-only transactions to local wallet balances
+        remoteOnlyTxs.forEach(rt => {
+          const w = rt.wallet || defaultBotWallet;
+          if (wallets[w] === undefined) wallets[w] = 0;
+          if (rt.type === 'income' || rt.type === 'topup') {
+            wallets[w] = (wallets[w] || 0) + Number(rt.amount || 0);
+          } else if (rt.type === 'expense') {
+            wallets[w] = Math.max(0, (wallets[w] || 0) - Number(rt.amount || 0));
+          }
+        });
+
+        // Ensure any new wallet keys from remote exist
+        for (const [wName, wBal] of Object.entries(remoteWallets)) {
+          if (wallets[wName] === undefined) {
+            wallets[wName] = Number(wBal) || 0;
+          }
+        }
+
+        stateChanged = true;
+        serverNeedsRehydration = true;
+
+        const newest = remoteOnlyTxs[0];
+        showToast(
+          'Telegram Real-Time ⚡',
+          `Mutasi baru: <b>${newest.note}</b> (${formatRupiah(newest.amount)})<br>Saldo dompet <b>${newest.wallet}</b> langsung terupdate!`,
+          newest.type === 'expense' ? 'expense' : 'success'
+        );
+      }
+
+      // Ensure any extra wallet names from remote are preserved
+      for (const [wName, wBal] of Object.entries(remoteWallets)) {
+        if (wallets[wName] === undefined) {
+          wallets[wName] = Number(wBal) || 0;
+          stateChanged = true;
+        }
+      }
+
+      if (stateChanged) {
+        currentUser.wallets = wallets;
+        currentUser.transactions = transactionHistory;
+        currentUser.isNewUser = (transactionHistory.length === 0 && Object.values(wallets).every(v => v === 0));
+        localStorage.setItem('tatadana_user_session', JSON.stringify(currentUser));
+        updateAllUserUI();
+        renderAllChats();
+      }
+
+      if (serverNeedsRehydration) {
+        syncUserDataToServer();
+      }
+    }
+
+    // Refresh & Auto-upgrade: Menarik data terbaru dari server dengan smart bidirectional merge
     function refreshUserFromServer(userId, phone) {
       if (!userId && !phone) return;
       const q = `/api/user-status?id=${encodeURIComponent(userId || '')}&phone=${encodeURIComponent(phone || '')}`;
@@ -2168,22 +2404,7 @@
         .then(res => res.json())
         .then(data => {
           if (data.success && data.user) {
-            const remote = data.user;
-            currentUser = Object.assign({}, currentUser, remote);
-            if (remote.wallets && Object.keys(remote.wallets).length > 0) {
-              wallets = Object.assign({}, remote.wallets);
-            }
-            if (Array.isArray(remote.transactions)) {
-              transactionHistory = remote.transactions;
-              mutationCount = transactionHistory.length;
-            }
-            currentUser.wallets = wallets;
-            currentUser.transactions = transactionHistory;
-
-            // Auto-upgrade saved localStorage session!
-            localStorage.setItem('tatadana_user_session', JSON.stringify(currentUser));
-            updateAllUserUI();
-            renderAllChats();
+            smartMergeUserWithRemote(data.user, 'refresh');
             updateAllTelegramLinks();
           }
         })
@@ -2211,32 +2432,44 @@
               if (!data || data.type === 'connected') return;
 
               if (data.type === 'transaction_added') {
-                if (data.wallets) {
-                  wallets = Object.assign({}, data.wallets);
-                }
-                if (data.user && Array.isArray(data.user.transactions)) {
-                  transactionHistory = data.user.transactions;
-                } else if (data.transaction) {
-                  if (!transactionHistory.some(t => t.id === data.transaction.id)) {
-                    transactionHistory.unshift(data.transaction);
+                if (data.transaction) {
+                  const tx = data.transaction;
+                  const txKey = getTxFingerprint(tx);
+                  const alreadyExists = transactionHistory.some(t => getTxFingerprint(t) === txKey);
+                  if (!alreadyExists) {
+                    transactionHistory.unshift(tx);
+                    mutationCount = transactionHistory.length;
+                    const w = tx.wallet || defaultBotWallet;
+                    if (wallets[w] === undefined) wallets[w] = 0;
+                    if (data.wallets && data.wallets[w] !== undefined) {
+                      wallets[w] = Number(data.wallets[w]) || 0;
+                    } else {
+                      if (tx.type === 'income' || tx.type === 'topup') {
+                        wallets[w] += Number(tx.amount || 0);
+                      } else if (tx.type === 'expense') {
+                        wallets[w] = Math.max(0, wallets[w] - Number(tx.amount || 0));
+                      }
+                    }
+                    if (data.wallets) {
+                      for (const [kw, vw] of Object.entries(data.wallets)) {
+                        if (wallets[kw] === undefined) wallets[kw] = Number(vw) || 0;
+                      }
+                    }
+                    currentUser.wallets = wallets;
+                    currentUser.transactions = transactionHistory;
+                    currentUser.isNewUser = false;
+                    localStorage.setItem('tatadana_user_session', JSON.stringify(currentUser));
+                    updateAllUserUI();
+                    renderAllChats();
+
+                    showToast(
+                      'Telegram Real-Time ⚡',
+                      `Mutasi baru: <b>${tx.note}</b> (${formatRupiah(tx.amount)})<br>Saldo dompet <b>${tx.wallet}</b> langsung terupdate!`,
+                      tx.type === 'expense' ? 'expense' : 'success'
+                    );
                   }
-                }
-                mutationCount = transactionHistory.length;
-                currentUser.wallets = wallets;
-                currentUser.transactions = transactionHistory;
-                currentUser.isNewUser = false;
-                localStorage.setItem('tatadana_user_session', JSON.stringify(currentUser));
-
-                updateAllUserUI();
-                renderAllChats();
-
-                const tx = data.transaction;
-                if (tx) {
-                  showToast(
-                    'Telegram Real-Time ⚡',
-                    `Mutasi baru: <b>${tx.note}</b> (${formatRupiah(tx.amount)})<br>Saldo dompet <b>${tx.wallet}</b> langsung terupdate!`,
-                    tx.type === 'expense' ? 'expense' : 'success'
-                  );
+                } else if (data.user) {
+                  smartMergeUserWithRemote(data.user, 'sse');
                 }
               } else if (data.type === 'account_approved') {
                 if (data.user) {
@@ -2259,7 +2492,7 @@
         }
       }
 
-      // 2. Resilient Poller: 1000ms (1 detik) sebagai safety net
+      // 2. Resilient Poller: 1200ms (1.2 detik) sebagai safety net
       const performSync = () => {
         if (!currentUser || (!currentUser.id && !currentUser.phone) || isSyncing) return;
         isSyncing = true;
@@ -2269,39 +2502,7 @@
           .then(data => {
             isSyncing = false;
             if (data.success && data.user) {
-              const remote = data.user;
-              const remoteTxList = remote.transactions || [];
-              const remoteWallets = remote.wallets || {};
-
-              const txLengthDiff = remoteTxList.length !== transactionHistory.length;
-              const txFirstDiff = remoteTxList.length > 0 && transactionHistory.length > 0 && remoteTxList[0].id !== transactionHistory[0].id;
-              const walletsDiff = JSON.stringify(wallets) !== JSON.stringify(remoteWallets);
-              const planDiff = remote.plan && remote.plan !== currentUser.plan;
-
-              if (txLengthDiff || txFirstDiff || walletsDiff || planDiff) {
-                const hadNewTx = remoteTxList.length > transactionHistory.length;
-                wallets = Object.assign({}, remoteWallets);
-                transactionHistory = remoteTxList;
-                mutationCount = remoteTxList.length;
-                if (remote.plan) currentUser.plan = remote.plan;
-                if (remote.status) currentUser.status = remote.status;
-                currentUser.wallets = wallets;
-                currentUser.transactions = transactionHistory;
-                currentUser.isNewUser = (transactionHistory.length === 0 && Object.values(wallets).every(v => v === 0));
-
-                localStorage.setItem('tatadana_user_session', JSON.stringify(currentUser));
-                updateAllUserUI();
-                renderAllChats();
-
-                if (hadNewTx) {
-                  const newest = remoteTxList[0];
-                  showToast(
-                    'Telegram Real-Time ⚡',
-                    `Mutasi baru: <b>${newest.note}</b> (${formatRupiah(newest.amount)})<br>Saldo dompet <b>${newest.wallet}</b> langsung terupdate!`,
-                    newest.type === 'expense' ? 'expense' : 'success'
-                  );
-                }
-              }
+              smartMergeUserWithRemote(data.user, 'poll');
             }
           })
           .catch(() => {
@@ -2818,6 +3019,9 @@
           );
           document.getElementById('btn-wa-confirm-link').href = `https://wa.me/${waAdminPhone}?text=${waMsg}`;
 
+          // Auto-listen to Super Admin approval live via SSE and fast poller
+          startPendingAutoCheck(user.phone, user.id);
+
           showToast(
             'Pendaftaran Tersimpan',
             'Status akun: <b>PENDING APPROVAL</b>. Menunggu persetujuan Super Admin.',
@@ -2903,10 +3107,9 @@
           return;
         }
 
-        // Status is approved: login to dashboard with clean Rp0 state!
-        switchToNewUserMode(user);
-        switchView('beranda');
-        showToast('Login Berhasil', `Selamat datang kembali, <b>${user.name}</b>!`, 'success');
+        // Status is approved: simpan sesi dan aktifkan real-time background sync!
+        localStorage.setItem('tatadana_user_session', JSON.stringify(user));
+        enterUserDashboard(user);
       })
       .catch(err => {
         showToast('Error Server', 'Tidak dapat menghubungi server lokal.', 'expense');
@@ -3334,16 +3537,20 @@
     updateAllUserUI();
     renderAllChats();
 
-    // Session Checking & View Routing
+    // Session Checking & View Routing (Mendukung Akun & Sesi Lama Tanpa Data Loss)
     const urlParams = new URLSearchParams(window.location.search);
     const forceLogout = urlParams.get('logout') === 'true';
     const forceLogin = urlParams.get('login') === 'true';
-    const savedUserSession = localStorage.getItem('tatadana_user_session');
+    const savedUserSession = localStorage.getItem('tatadana_user_session') ||
+                             localStorage.getItem('tatadana_user') ||
+                             localStorage.getItem('user_session') ||
+                             localStorage.getItem('tatadana_session');
 
     if (!forceLogout && !forceLogin && savedUserSession) {
       try {
         let u = JSON.parse(savedUserSession);
         u = migrateLocalUserSchema(u);
+        // Otomatis simpan ke format standar terbaru
         localStorage.setItem('tatadana_user_session', JSON.stringify(u));
         enterUserDashboard(u, false);
       } catch (err) {
