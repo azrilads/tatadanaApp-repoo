@@ -2629,7 +2629,92 @@
       if (otpInput) otpInput.value = '';
     }
 
-    // 1. KIRIM KODE OTP KE WHATSAPP USER
+    // =========================================================================
+    // RESILIENT CLIENT-SIDE PERSISTENCE & AUTO-REHYDRATION ENGINE
+    // (Melindungi akun pendaftar baru dari cold-restart Vercel Serverless)
+    // =========================================================================
+    function saveLocalRegistration(user) {
+      if (!user || !user.phone) return;
+      try {
+        localStorage.setItem('tatadana_pending_registration', JSON.stringify(user));
+        localStorage.setItem('tatadana_last_phone', user.phone);
+        if (user.status === 'approved') {
+          localStorage.setItem('tatadana_user_session', JSON.stringify(user));
+        }
+
+        let localUsers = [];
+        try {
+          localUsers = JSON.parse(localStorage.getItem('tatadana_local_users') || '[]');
+        } catch(e) {}
+        if (!Array.isArray(localUsers)) localUsers = [];
+
+        const clean = String(user.phone).replace(/\D/g, '');
+        const idx = localUsers.findIndex(u => (u.phone || '').replace(/\D/g, '') === clean);
+        if (idx >= 0) {
+          localUsers[idx] = Object.assign({}, localUsers[idx], user);
+        } else {
+          localUsers.unshift(user);
+        }
+        localStorage.setItem('tatadana_local_users', JSON.stringify(localUsers));
+      } catch (err) {
+        console.error('Error saving local registration:', err);
+      }
+    }
+
+    function getLocalUserByPhone(phone) {
+      if (!phone) return null;
+      const clean = String(phone).replace(/\D/g, '');
+      const cleanStd = clean.startsWith('62') ? '0' + clean.slice(2) : clean;
+      const clean62 = clean.startsWith('0') ? '62' + clean.slice(1) : clean;
+
+      const checkMatch = (u) => {
+        if (!u || !u.phone) return false;
+        const uClean = String(u.phone).replace(/\D/g, '');
+        const uStd = uClean.startsWith('62') ? '0' + uClean.slice(2) : uClean;
+        return uClean === clean || uClean === cleanStd || uClean === clean62 || uStd === cleanStd;
+      };
+
+      try {
+        const pending = JSON.parse(localStorage.getItem('tatadana_pending_registration') || 'null');
+        if (checkMatch(pending)) return pending;
+      } catch(e) {}
+
+      try {
+        const sess = JSON.parse(localStorage.getItem('tatadana_user_session') || 'null');
+        if (checkMatch(sess)) return sess;
+      } catch(e) {}
+
+      try {
+        const localList = JSON.parse(localStorage.getItem('tatadana_local_users') || '[]');
+        if (Array.isArray(localList)) {
+          const found = localList.find(checkMatch);
+          if (found) return found;
+        }
+      } catch(e) {}
+
+      return null;
+    }
+
+    async function rehydrateUserToServer(userObj) {
+      if (!userObj) return null;
+      try {
+        const res = await fetch('/api/user/rehydrate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(userObj)
+        });
+        const data = await res.json();
+        if (data.success && data.user) {
+          saveLocalRegistration(data.user);
+          return data.user;
+        }
+      } catch (e) {
+        console.error('Rehydration failed:', e);
+      }
+      return null;
+    }
+
+    // 1. KIRIM KODE OTP KE WHATSAPP USER (Dengan Auto-Rehydration)
     function requestUserOtp() {
       const phoneInput = document.getElementById('portal-phone-input');
       const phone = (phoneInput?.value || '').trim();
@@ -2641,25 +2726,56 @@
       const btn = document.getElementById('btn-portal-send-otp');
       if (btn) btn.innerHTML = '<span>⏳</span><span>Mengirim OTP ke WhatsApp User...</span>';
 
+      const localUser = getLocalUserByPhone(phone);
+
       fetch('/api/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phone })
+        body: JSON.stringify({ phone: phone, userData: localUser })
       })
       .then(res => res.json())
-      .then(data => {
+      .then(async data => {
         if (btn) btn.innerHTML = '<span>📲</span><span>Kirim Kode OTP ke WhatsApp User →</span>';
 
         if (data.isPending) {
           showToast('Menunggu Verifikasi Admin', data.message, 'info');
-          // Arahkan ke tab cek status dengan tombol kirim verifikasi ke WA Admin
+          // Simpan status pending ke local storage
+          if (data.user) saveLocalRegistration(data.user);
           switchPortalTab('status');
           document.getElementById('portal-status-query').value = phone;
-          showStatusResult(data.user, data.adminWaLink);
+          showStatusResult(data.user || localUser, data.adminWaLink);
           return;
         }
 
         if (!data.success) {
+          // Jika server melaporkan nomor belum terdaftar, coba auto-rehydrate dari local cache!
+          if (localUser) {
+            showToast('Memulihkan Akun 🔄', 'Memulihkan data pendaftaran Anda yang tersimpan di perangkat ini...', 'info');
+            const restored = await rehydrateUserToServer(localUser);
+            if (restored) {
+              if (restored.status === 'pending') {
+                showToast('Akun Dipulihkan ⏳', 'Pendaftaran Anda berhasil disinkronkan kembali ke antrean admin.', 'info');
+                switchPortalTab('status');
+                document.getElementById('portal-status-query').value = phone;
+                const waAdminMsg = encodeURIComponent(
+                  `Halo Super Admin TataDana (${currentAdminWa}),\n` +
+                  `Saya ingin melakukan verifikasi pendaftaran akun TataDana:\n` +
+                  `• ID: ${restored.id}\n` +
+                  `• Nama: ${restored.name}\n` +
+                  `• No WhatsApp: ${restored.phone}\n` +
+                  `• Paket: ${restored.plan}\n\n` +
+                  `Mohon verifikasi dan approve akun saya. Terima kasih!`
+                );
+                const adminWaLink = `https://wa.me/${currentAdminWa}?text=${waAdminMsg}`;
+                showStatusResult(restored, adminWaLink);
+                return;
+              } else {
+                // Akun approved: Coba request OTP lagi
+                return requestUserOtp();
+              }
+            }
+          }
+
           showToast('Gagal Mengirim OTP', data.message || 'Nomor WhatsApp tidak terdaftar.', 'expense');
           return;
         }
@@ -2732,6 +2848,8 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) {
+          data.user.status = 'approved';
+          saveLocalRegistration(data.user);
           localStorage.setItem('tatadana_user_session', JSON.stringify(data.user));
           enterUserDashboard(data.user);
         } else {
@@ -2747,6 +2865,7 @@
             plan: 'TataDana Pro Lifetime',
             status: 'approved'
           };
+          saveLocalRegistration(u);
           localStorage.setItem('tatadana_user_session', JSON.stringify(u));
           enterUserDashboard(u);
         } else {
@@ -2755,7 +2874,7 @@
       });
     }
 
-    // 3. DAFTAR PENGGUNA BARU & VERIFIKASI KE WA ADMIN
+    // 3. DAFTAR PENGGUNA BARU & VERIFIKASI KE WA ADMIN (Resilient Persistence)
     function handlePortalRegisterSubmit() {
       const name = document.getElementById('portal-reg-name').value.trim();
       const phone = document.getElementById('portal-reg-phone').value.trim();
@@ -2767,45 +2886,87 @@
         return;
       }
 
+      // Pre-persist immediately to localStorage so that even if network drops or container restarts, data is preserved
+      const clientPendingUser = {
+        id: 'USR-' + Math.floor(1000 + Math.random() * 9000),
+        name: name,
+        phone: phone,
+        email: email,
+        plan: plan,
+        price: plan.includes('Pro') ? 99000 : 0,
+        registeredAt: getNowWIB(),
+        registeredTimestamp: Date.now(),
+        status: 'pending',
+        isNewUser: true,
+        premiumUpgradePending: false,
+        notes: `Pendaftaran via web (${plan})`,
+        wallets: { 'BCA Payroll': 0, 'Mandiri Tabungan': 0, 'GoPay': 0, 'Dompet Cash': 0 },
+        transactions: []
+      };
+      saveLocalRegistration(clientPendingUser);
+
       fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          id: clientPendingUser.id,
           name: name,
           phone: phone,
           email: email,
           plan: plan,
-          registeredAt: getNowWIB()
+          registeredAt: clientPendingUser.registeredAt
         })
       })
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          const user = data.user;
-          document.getElementById('portal-register-form-box').classList.add('hidden');
-          const pBox = document.getElementById('portal-register-pending-box');
-          pBox.classList.remove('hidden');
+        const user = data.user || clientPendingUser;
+        saveLocalRegistration(user);
 
-          document.getElementById('portal-pending-id').innerText = user.id;
-          document.getElementById('portal-pending-name').innerText = user.name;
-          document.getElementById('portal-pending-phone').innerText = user.phone;
-          document.getElementById('portal-pending-plan').innerText = user.plan;
-
-          const waAdminLink = data.adminWaLink || `https://wa.me/${currentAdminWa}?text=${encodeURIComponent('Halo Super Admin TataDana, saya ingin verifikasi pendaftaran akun ' + user.name + ' (' + user.id + ').')}`;
-          document.getElementById('btn-portal-send-wa-admin').href = waAdminLink;
-
-          // Auto-listen to Super Admin approval live via SSE and fast poller
-          startPendingAutoCheck(user.phone, user.id);
-
-          showToast(
-            'Pendaftaran Berhasil Dicatat! 🔔',
-            'Data tersimpan dengan status <b>PENDING</b>. Notifikasi telah dikirimkan secara real-time ke Dashboard Super Admin untuk segera di-approve.',
-            'info'
-          );
+        if (data.alreadyApproved) {
+          showToast('Akun Sudah Aktif 🎉', data.message, 'success');
+          fillPortalPhone(user.phone, user.name);
+          switchPortalTab('login');
+          return;
         }
+
+        document.getElementById('portal-register-form-box').classList.add('hidden');
+        const pBox = document.getElementById('portal-register-pending-box');
+        pBox.classList.remove('hidden');
+
+        document.getElementById('portal-pending-id').innerText = user.id;
+        document.getElementById('portal-pending-name').innerText = user.name;
+        document.getElementById('portal-pending-phone').innerText = user.phone;
+        document.getElementById('portal-pending-plan').innerText = user.plan;
+
+        const waAdminLink = data.adminWaLink || `https://wa.me/${currentAdminWa}?text=${encodeURIComponent('Halo Super Admin TataDana, saya ingin verifikasi pendaftaran akun ' + user.name + ' (' + user.id + ').')}`;
+        document.getElementById('btn-portal-send-wa-admin').href = waAdminLink;
+
+        // Auto-listen to Super Admin approval live via SSE and fast poller
+        startPendingAutoCheck(user.phone, user.id);
+
+        showToast(
+          'Pendaftaran Berhasil Dicatat! 🔔',
+          'Data tersimpan dengan status <b>PENDING</b>. Notifikasi telah dikirimkan secara real-time ke Dashboard Super Admin untuk segera di-approve.',
+          'info'
+        );
       })
       .catch(err => {
-        showToast('Error Server', 'Gagal memproses pendaftaran ke server.', 'expense');
+        // Fallback offline / network jitter: Data still safely saved locally!
+        const user = clientPendingUser;
+        document.getElementById('portal-register-form-box').classList.add('hidden');
+        const pBox = document.getElementById('portal-register-pending-box');
+        pBox.classList.remove('hidden');
+
+        document.getElementById('portal-pending-id').innerText = user.id;
+        document.getElementById('portal-pending-name').innerText = user.name;
+        document.getElementById('portal-pending-phone').innerText = user.phone;
+        document.getElementById('portal-pending-plan').innerText = user.plan;
+
+        const waAdminLink = `https://wa.me/${currentAdminWa}?text=${encodeURIComponent('Halo Super Admin TataDana, saya mendaftar akun TataDana:\n• ID: ' + user.id + '\n• Nama: ' + user.name + '\n• No WA: ' + user.phone + '\n• Paket: ' + user.plan + '\nMohon verifikasi dan approve akun saya. Terima kasih!')}`;
+        document.getElementById('btn-portal-send-wa-admin').href = waAdminLink;
+        startPendingAutoCheck(user.phone, user.id);
+
+        showToast('Pendaftaran Tersimpan Lokal 💾', 'Data tersimpan di perangkat ini. Klik tombol WhatsApp untuk verifikasi langsung ke Super Admin!', 'info');
       });
     }
 
@@ -2892,11 +3053,19 @@
 
       fetch(`/api/user-status?phone=${q}&id=${q}`)
       .then(res => res.json())
-      .then(data => {
-        if (data.success && data.user) {
-          const user = data.user;
+      .then(async data => {
+        let user = (data.success && data.user) ? data.user : null;
+        if (!user) {
+          const localUser = getLocalUserByPhone(q);
+          if (localUser) {
+            user = await rehydrateUserToServer(localUser) || localUser;
+          }
+        }
+
+        if (user) {
+          saveLocalRegistration(user);
           const waAdminMsg = encodeURIComponent(
-            `Halo Super Admin TataDana (mazrilazkia31@gmail.com),\n` +
+            `Halo Super Admin TataDana (${currentAdminWa || 'mazrilazkia31@gmail.com'}),\n` +
             `Saya ingin verifikasi akun TataDana:\n` +
             `• ID: ${user.id}\n` +
             `• Nama: ${user.name}\n` +
@@ -2910,8 +3079,23 @@
           showToast('Tidak Ditemukan', 'User dengan nomor WhatsApp / ID tersebut tidak ditemukan.', 'expense');
         }
       })
-      .catch(() => {
-        showToast('Koneksi Gagal', 'Tidak dapat memeriksa status ke server.', 'expense');
+      .catch(async () => {
+        const localUser = getLocalUserByPhone(q);
+        if (localUser) {
+          const waAdminMsg = encodeURIComponent(
+            `Halo Super Admin TataDana (${currentAdminWa || 'mazrilazkia31@gmail.com'}),\n` +
+            `Saya ingin verifikasi akun TataDana:\n` +
+            `• ID: ${localUser.id}\n` +
+            `• Nama: ${localUser.name}\n` +
+            `• No WA: ${localUser.phone}\n` +
+            `• Paket: ${localUser.plan}\n\n` +
+            `Mohon di-approve akses user dashboard saya. Terima kasih!`
+          );
+          const waLink = `https://wa.me/${currentAdminWa}?text=${waAdminMsg}`;
+          showStatusResult(localUser, waLink);
+        } else {
+          showToast('Koneksi Gagal', 'Tidak dapat memeriksa status ke server.', 'expense');
+        }
       });
     }
 
@@ -2984,50 +3168,94 @@
         return;
       }
 
+      const clientPendingUser = {
+        id: 'USR-' + Math.floor(1000 + Math.random() * 9000),
+        name: name,
+        phone: phone,
+        email: email,
+        plan: plan,
+        price: plan.includes('Pro') ? 99000 : 0,
+        registeredAt: getNowWIB(),
+        registeredTimestamp: Date.now(),
+        status: 'pending',
+        isNewUser: true,
+        premiumUpgradePending: false,
+        notes: `Pendaftaran via web (${plan})`,
+        wallets: { 'BCA Payroll': 0, 'Mandiri Tabungan': 0, 'GoPay': 0, 'Dompet Cash': 0 },
+        transactions: []
+      };
+      saveLocalRegistration(clientPendingUser);
+
       fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          id: clientPendingUser.id,
           name: name,
           phone: phone,
           email: email,
           plan: plan,
-          registeredAt: getNowWIB()
+          registeredAt: clientPendingUser.registeredAt
         })
       })
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          const user = data.user;
-          document.getElementById('form-register-container').classList.add('hidden');
-          const screenPending = document.getElementById('screen-wa-pending');
-          screenPending.classList.remove('hidden');
+        const user = data.user || clientPendingUser;
+        saveLocalRegistration(user);
 
-          document.getElementById('pending-user-id').innerText = user.id;
-          document.getElementById('pending-user-name').innerText = user.name;
-          document.getElementById('pending-user-phone').innerText = user.phone;
-          document.getElementById('pending-user-plan').innerText = user.plan;
+        document.getElementById('form-register-container').classList.add('hidden');
+        const screenPending = document.getElementById('screen-wa-pending');
+        screenPending.classList.remove('hidden');
 
-          const waAdminPhone = data.adminWaNumber || currentAdminWa || '6285176983196';
-          const waMsg = encodeURIComponent(
-            `Halo Super Admin TataDana, saya sudah mendaftar akun baru TataDana.\n` +
-            `• ID Pengguna: ${user.id}\n` +
-            `• Nama Lengkap: ${user.name}\n` +
-            `• No WhatsApp: ${user.phone}\n` +
-            `• Paket Pilihan: ${user.plan}\n` +
-            `Mohon di-approve akses user dashboard saya. Terima kasih!`
-          );
-          document.getElementById('btn-wa-confirm-link').href = `https://wa.me/${waAdminPhone}?text=${waMsg}`;
+        document.getElementById('pending-user-id').innerText = user.id;
+        document.getElementById('pending-user-name').innerText = user.name;
+        document.getElementById('pending-user-phone').innerText = user.phone;
+        document.getElementById('pending-user-plan').innerText = user.plan;
 
-          // Auto-listen to Super Admin approval live via SSE and fast poller
-          startPendingAutoCheck(user.phone, user.id);
+        const waAdminPhone = data.adminWaNumber || currentAdminWa || '6285176983196';
+        const waMsg = encodeURIComponent(
+          `Halo Super Admin TataDana, saya sudah mendaftar akun baru TataDana.\n` +
+          `• ID Pengguna: ${user.id}\n` +
+          `• Nama Lengkap: ${user.name}\n` +
+          `• No WhatsApp: ${user.phone}\n` +
+          `• Paket Pilihan: ${user.plan}\n` +
+          `Mohon di-approve akses user dashboard saya. Terima kasih!`
+        );
+        document.getElementById('btn-wa-confirm-link').href = `https://wa.me/${waAdminPhone}?text=${waMsg}`;
 
-          showToast(
-            'Pendaftaran Tersimpan',
-            'Status akun: <b>PENDING APPROVAL</b>. Menunggu persetujuan Super Admin.',
-            'info'
-          );
-        }
+        // Auto-listen to Super Admin approval live via SSE and fast poller
+        startPendingAutoCheck(user.phone, user.id);
+
+        showToast(
+          'Pendaftaran Tersimpan',
+          'Status akun: <b>PENDING APPROVAL</b>. Menunggu persetujuan Super Admin.',
+          'info'
+        );
+      })
+      .catch(() => {
+        const user = clientPendingUser;
+        document.getElementById('form-register-container').classList.add('hidden');
+        const screenPending = document.getElementById('screen-wa-pending');
+        screenPending.classList.remove('hidden');
+
+        document.getElementById('pending-user-id').innerText = user.id;
+        document.getElementById('pending-user-name').innerText = user.name;
+        document.getElementById('pending-user-phone').innerText = user.phone;
+        document.getElementById('pending-user-plan').innerText = user.plan;
+
+        const waAdminPhone = currentAdminWa || '6285176983196';
+        const waMsg = encodeURIComponent(
+          `Halo Super Admin TataDana, saya sudah mendaftar akun baru TataDana.\n` +
+          `• ID Pengguna: ${user.id}\n` +
+          `• Nama Lengkap: ${user.name}\n` +
+          `• No WhatsApp: ${user.phone}\n` +
+          `• Paket Pilihan: ${user.plan}\n` +
+          `Mohon di-approve akses user dashboard saya. Terima kasih!`
+        );
+        document.getElementById('btn-wa-confirm-link').href = `https://wa.me/${waAdminPhone}?text=${waMsg}`;
+        startPendingAutoCheck(user.phone, user.id);
+
+        showToast('Pendaftaran Tersimpan Lokal 💾', 'Data tersimpan di perangkat ini. Klik tombol WhatsApp untuk verifikasi.', 'info');
       });
     }
 
@@ -3037,17 +3265,26 @@
 
       fetch(`/api/user-status?phone=${pendingPhone}&id=${pendingId}`)
         .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            if (data.status === 'approved') {
+        .then(async data => {
+          let user = (data.success && data.user) ? data.user : null;
+          if (!user) {
+            const localUser = getLocalUserByPhone(pendingPhone);
+            if (localUser) {
+              user = await rehydrateUserToServer(localUser) || localUser;
+            }
+          }
+
+          if (user) {
+            if (user.status === 'approved') {
               showToast(
                 'Akun Telah Disetujui! 🎉',
                 `Selamat, Super Admin telah meng-approve akun Anda! Anda diarahkan ke dashboard dengan saldo awal Rp0.`,
                 'success'
               );
-              switchToNewUserMode(data.user);
+              saveLocalRegistration(user);
+              switchToNewUserMode(user);
               switchView('beranda');
-            } else if (data.status === 'unapproved') {
+            } else if (user.status === 'unapproved') {
               showToast('Akses Ditolak', 'Pendaftaran akun Anda ditolak atau dinonaktifkan oleh Super Admin.', 'expense');
             } else {
               showToast('Masih Menunggu Persetujuan', 'Akun masih berstatus PENDING. Silakan tunggu konfirmasi Super Admin.', 'info');
@@ -3074,14 +3311,38 @@
         return;
       }
 
+      const localUser = getLocalUserByPhone(phone);
+
       fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phone })
+        body: JSON.stringify({ phone: phone, userData: localUser })
       })
       .then(res => res.json())
-      .then(data => {
+      .then(async data => {
         if (!data.success) {
+          if (localUser) {
+            const restored = await rehydrateUserToServer(localUser);
+            if (restored) {
+              if (restored.status === 'pending') {
+                document.getElementById('pending-user-id').innerText = restored.id;
+                document.getElementById('pending-user-name').innerText = restored.name;
+                document.getElementById('pending-user-phone').innerText = restored.phone;
+                document.getElementById('pending-user-plan').innerText = restored.plan;
+                document.getElementById('form-register-container').classList.add('hidden');
+                document.getElementById('screen-wa-pending').classList.remove('hidden');
+                switchAuthTab('register');
+                startPendingAutoCheck(restored.phone, restored.id);
+                showToast('Menunggu Persetujuan', `Akun <b>${restored.name}</b> belum disetujui Super Admin. Silakan tunggu verifikasi.`, 'info');
+                return;
+              } else if (restored.status === 'approved') {
+                saveLocalRegistration(restored);
+                localStorage.setItem('tatadana_user_session', JSON.stringify(restored));
+                enterUserDashboard(restored);
+                return;
+              }
+            }
+          }
           showToast('Nomor Belum Terdaftar', data.message || 'Nomor WhatsApp belum terdaftar.', 'expense');
           return;
         }
@@ -3090,6 +3351,7 @@
 
         // Block login if user is still pending (Requirement 3)
         if (user.status === 'pending') {
+          saveLocalRegistration(user);
           document.getElementById('pending-user-id').innerText = user.id;
           document.getElementById('pending-user-name').innerText = user.name;
           document.getElementById('pending-user-phone').innerText = user.phone;
@@ -3108,11 +3370,16 @@
         }
 
         // Status is approved: simpan sesi dan aktifkan real-time background sync!
+        saveLocalRegistration(user);
         localStorage.setItem('tatadana_user_session', JSON.stringify(user));
         enterUserDashboard(user);
       })
-      .catch(err => {
-        showToast('Error Server', 'Tidak dapat menghubungi server lokal.', 'expense');
+      .catch(async () => {
+        if (localUser && localUser.status === 'approved') {
+          enterUserDashboard(localUser);
+        } else {
+          showToast('Error Server', 'Tidak dapat menghubungi server lokal.', 'expense');
+        }
       });
     }
 
@@ -3545,6 +3812,39 @@
                              localStorage.getItem('tatadana_user') ||
                              localStorage.getItem('user_session') ||
                              localStorage.getItem('tatadana_session');
+
+    // Prefill phone inputs from last saved registration
+    const lastSavedPhone = localStorage.getItem('tatadana_last_phone') || '';
+    if (lastSavedPhone) {
+      const pInp = document.getElementById('portal-phone-input');
+      if (pInp && !pInp.value) pInp.value = lastSavedPhone;
+      const lInp = document.getElementById('login-input-phone');
+      if (lInp && !lInp.value) lInp.value = lastSavedPhone;
+    }
+
+    // Proactive background rehydration check:
+    // Jika ada pending registration di local storage, pastikan server memilikinya (jika cold start terjadi)
+    try {
+      const pendingRaw = localStorage.getItem('tatadana_pending_registration');
+      if (pendingRaw) {
+        const pendingUser = JSON.parse(pendingRaw);
+        if (pendingUser && pendingUser.phone) {
+          fetch(`/api/user-status?phone=${encodeURIComponent(pendingUser.phone)}&id=${encodeURIComponent(pendingUser.id || '')}`)
+            .then(res => res.json())
+            .then(st => {
+              if (!st.success) {
+                // Server kehilangan user ini karena cold start -> pulihkan secara diam-diam!
+                console.log('🔄 [COLD-START RECOVERY] Memulihkan antrean pending pengguna ke server...');
+                rehydrateUserToServer(pendingUser);
+              } else if (st.success && st.status === 'approved' && st.user) {
+                pendingUser.status = 'approved';
+                saveLocalRegistration(st.user);
+              }
+            })
+            .catch(() => {});
+        }
+      }
+    } catch(e) {}
 
     if (!forceLogout && !forceLogin && savedUserSession) {
       try {

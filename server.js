@@ -10,6 +10,7 @@ const DB_FILE = path.join(__dirname, 'users_db.json');
 const CONFIG_FILE = path.join(__dirname, 'admin_config.json');
 const TMP_DB_FILE = path.join('/tmp', 'users_db.json');
 const TMP_BACKUP_DB_FILE = path.join('/tmp', 'tatadana_backup_db.json');
+const TMP_PENDING_FILE = path.join('/tmp', 'tatadana_pending_users.json');
 const TMP_CONFIG_FILE = path.join('/tmp', 'admin_config.json');
 
 // Super Admin, WhatsApp Gateway & Telegram Bot Configuration (Dynamic & Persistent)
@@ -94,26 +95,102 @@ function migrateUserSchema(u) {
   return u;
 }
 
+function normalizePhone(p) {
+  if (!p) return '';
+  let clean = String(p).replace(/\D/g, '');
+  if (clean.startsWith('62')) clean = '0' + clean.slice(2);
+  return clean;
+}
+
+function deduplicateUsers(userList) {
+  if (!Array.isArray(userList)) return [];
+  const map = new Map();
+  // Sort ascending by score so the best record (approved, has transactions, newer timestamp) overwrites earlier ones
+  const sorted = [...userList].sort((a, b) => {
+    const aScore = (a.status === 'approved' ? 100 : 0) +
+                   ((Array.isArray(a.transactions) && a.transactions.length > 0) ? 50 : 0) +
+                   (Number(a.lastUpdated) || Number(a.registeredTimestamp) || 0);
+    const bScore = (b.status === 'approved' ? 100 : 0) +
+                   ((Array.isArray(b.transactions) && b.transactions.length > 0) ? 50 : 0) +
+                   (Number(b.lastUpdated) || Number(b.registeredTimestamp) || 0);
+    return aScore - bScore;
+  });
+
+  for (const u of sorted) {
+    if (!u || typeof u !== 'object') continue;
+    migrateUserSchema(u);
+    const pClean = u.phone ? normalizePhone(u.phone) : '';
+    let matchKey = u.id || (pClean ? `phone_${pClean}` : `usr_${Math.random()}`);
+
+    // If an entry with this phone already exists under another key, use that key
+    if (pClean) {
+      for (const [k, v] of map.entries()) {
+        if (v.phone && normalizePhone(v.phone) === pClean) {
+          matchKey = k;
+          break;
+        }
+      }
+    }
+
+    if (map.has(matchKey)) {
+      const existing = map.get(matchKey);
+      const merged = Object.assign({}, existing, u);
+      // Status priority: approved > pending > unapproved
+      if (existing.status === 'approved' || u.status === 'approved') {
+        merged.status = 'approved';
+      } else if (existing.status === 'pending' || u.status === 'pending') {
+        merged.status = 'pending';
+      }
+      // Preserve transactions & wallets if existing had them
+      if (Array.isArray(existing.transactions) && existing.transactions.length > (u.transactions || []).length) {
+        merged.transactions = existing.transactions;
+        merged.wallets = existing.wallets || u.wallets;
+      }
+      map.set(matchKey, merged);
+    } else {
+      map.set(matchKey, u);
+    }
+  }
+
+  return Array.from(map.values());
+}
+
 // Helper to read DB with automatic legacy schema migration & multi-tier resilience
 function readDb() {
   try {
+    let users = [];
     if (global.__tatadana_db && Array.isArray(global.__tatadana_db) && global.__tatadana_db.length > 0) {
-      return global.__tatadana_db;
-    }
-    const candidates = [TMP_DB_FILE, TMP_BACKUP_DB_FILE, DB_FILE];
-    for (const targetFile of candidates) {
-      try {
-        if (fs.existsSync(targetFile)) {
-          const data = fs.readFileSync(targetFile, 'utf8');
-          const parsed = JSON.parse(data);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            parsed.forEach(migrateUserSchema);
-            global.__tatadana_db = parsed;
-            return parsed;
+      users = global.__tatadana_db;
+    } else {
+      const candidates = [TMP_DB_FILE, TMP_BACKUP_DB_FILE, DB_FILE];
+      for (const targetFile of candidates) {
+        try {
+          if (fs.existsSync(targetFile)) {
+            const data = fs.readFileSync(targetFile, 'utf8');
+            const parsed = JSON.parse(data);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              users = parsed;
+              break;
+            }
           }
-        }
-      } catch (err) {}
+        } catch (err) {}
+      }
     }
+
+    // Merge pending users cache if available in /tmp (resilience against container restarts)
+    try {
+      if (fs.existsSync(TMP_PENDING_FILE)) {
+        const pData = fs.readFileSync(TMP_PENDING_FILE, 'utf8');
+        const pendingParsed = JSON.parse(pData);
+        if (Array.isArray(pendingParsed) && pendingParsed.length > 0) {
+          users = users.concat(pendingParsed);
+        }
+      }
+    } catch (e) {}
+
+    const deduped = deduplicateUsers(users);
+    global.__tatadana_db = deduped;
+    return deduped;
   } catch (err) {
     console.error('Error reading DB:', err);
   }
@@ -123,14 +200,21 @@ function readDb() {
 // Helper to write DB with multi-tier persistence
 function writeDb(data) {
   try {
-    if (Array.isArray(data)) {
-      data.forEach(migrateUserSchema);
-      global.__tatadana_db = data;
-    }
-    const jsonStr = JSON.stringify(data, null, 2);
+    if (!Array.isArray(data)) return false;
+    const deduped = deduplicateUsers(data);
+    global.__tatadana_db = deduped;
+
+    const jsonStr = JSON.stringify(deduped, null, 2);
     try { fs.writeFileSync(DB_FILE, jsonStr, 'utf8'); } catch(e){}
     try { fs.writeFileSync(TMP_DB_FILE, jsonStr, 'utf8'); } catch(e){}
     try { fs.writeFileSync(TMP_BACKUP_DB_FILE, jsonStr, 'utf8'); } catch(e){}
+
+    // Explicitly persist all pending users to separate pending cache
+    try {
+      const pendingUsers = deduped.filter(u => u.status === 'pending');
+      fs.writeFileSync(TMP_PENDING_FILE, JSON.stringify(pendingUsers, null, 2), 'utf8');
+    } catch(e) {}
+
     return true;
   } catch (err) {
     console.error('Error writing DB:', err);
@@ -1419,6 +1503,48 @@ const server = http.createServer(async (req, res) => {
         };
       }
 
+      // Fallback auto-rehydration: jika server cold-restart tapi klien menyertakan data pendaftaran
+      if (!user && body.userData && typeof body.userData === 'object') {
+        const uData = body.userData;
+        const uPhoneClean = (uData.phone || '').replace(/\D/g, '');
+        if (uPhoneClean === cleanInput || !cleanInput) {
+          const isPro = (uData.plan || '').includes('Pro');
+          user = {
+            id: uData.id || ('USR-' + Math.floor(1000 + Math.random() * 9000)),
+            name: uData.name || 'Pengguna Terdaftar',
+            email: uData.email || '',
+            phone: uData.phone || rawPhone,
+            plan: uData.plan || (isPro ? 'TataDana Pro Lifetime' : 'TataDana Starter'),
+            price: uData.price !== undefined ? uData.price : (isPro ? 99000 : 0),
+            registeredAt: uData.registeredAt || new Date().toLocaleString('id-ID'),
+            registeredTimestamp: uData.registeredTimestamp || Date.now(),
+            status: uData.status || 'pending',
+            isNewUser: uData.isNewUser !== undefined ? uData.isNewUser : true,
+            premiumUpgradePending: !!uData.premiumUpgradePending,
+            notes: uData.notes || 'Dipulihkan otomatis via OTP login request',
+            wallets: uData.wallets || {
+              'BCA Payroll': 0,
+              'Mandiri Tabungan': 0,
+              'GoPay': 0,
+              'Dompet Cash': 0
+            },
+            transactions: Array.isArray(uData.transactions) ? uData.transactions : [],
+            lastUpdated: Date.now()
+          };
+          users.unshift(user);
+          writeDb(users);
+          console.log(`🔄 [SEND-OTP REHYDRATION] User "${user.name}" (${user.phone}) berhasil dipulihkan ke DB server saat login.`);
+          if (user.status === 'pending') {
+            broadcastAdminEvent({
+              type: 'new_pending_user',
+              user: user,
+              pendingCount: users.filter(u => u.status === 'pending').length,
+              timestamp: Date.now()
+            });
+          }
+        }
+      }
+
       if (!user) {
         res.writeHead(404);
         res.end(JSON.stringify({
@@ -1549,33 +1675,82 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // POST /api/register
+    // POST /api/register (Pendaftaran Akun Baru dengan Deduplikasi & Multi-Tier Resilience)
     if (pathname === '/api/register' && req.method === 'POST') {
       const body = await parseBody(req);
+      const rawPhone = (body.phone || '').trim();
+      const cleanPhone = rawPhone.replace(/\D/g, '');
       const users = readDb();
-      
-      const newId = 'USR-' + Math.floor(1000 + Math.random() * 9000);
+
+      // Cek apakah nomor atau ID sudah terdaftar
+      const existingUser = findUserByQuery(users, { phone: cleanPhone, id: body.id });
+      if (existingUser) {
+        migrateUserSchema(existingUser);
+        // Jika sudah di-approve Super Admin, langsung kembalikan status aktif
+        if (existingUser.status === 'approved') {
+          res.writeHead(200);
+          res.end(JSON.stringify({
+            success: true,
+            alreadyApproved: true,
+            user: existingUser,
+            message: 'Nomor WhatsApp Anda sudah terdaftar dan telah disetujui (Approved). Silakan langsung login dengan OTP.'
+          }));
+          return;
+        }
+
+        // Jika masih berstatus pending, perbarui informasi jika ada perubahan data
+        if (body.name) existingUser.name = body.name;
+        if (body.email) existingUser.email = body.email;
+        if (body.plan) existingUser.plan = body.plan;
+        existingUser.lastUpdated = Date.now();
+        writeDb(users);
+
+        const waAdminMsg = encodeURIComponent(
+          `Halo Super Admin TataDana (${ADMIN_CONFIG.email}),\n` +
+          `Saya ingin melakukan verifikasi pendaftaran akun TataDana:\n` +
+          `• ID Pengguna: ${existingUser.id}\n` +
+          `• Nama Lengkap: ${existingUser.name}\n` +
+          `• No WhatsApp: ${existingUser.phone}\n` +
+          `• Pilihan Paket: ${existingUser.plan}\n\n` +
+          `Mohon verifikasi dan approve akun saya. Terima kasih!`
+        );
+        const adminWaLink = `https://wa.me/${ADMIN_CONFIG.waNumber}?text=${waAdminMsg}`;
+
+        res.writeHead(200);
+        res.end(JSON.stringify({
+          success: true,
+          alreadyPending: true,
+          user: existingUser,
+          adminWaNumber: ADMIN_CONFIG.waNumber,
+          adminWaDisplay: ADMIN_CONFIG.waDisplay,
+          adminWaLink: adminWaLink
+        }));
+        return;
+      }
+
+      const newId = body.id || ('USR-' + Math.floor(1000 + Math.random() * 9000));
       const isPro = (body.plan || '').includes('Pro');
       const newUser = {
         id: newId,
         name: body.name || 'Pengguna Baru',
         email: body.email || '',
-        phone: body.phone || '',
+        phone: rawPhone,
         plan: body.plan || (isPro ? 'TataDana Pro Lifetime' : 'TataDana Starter'),
-        price: isPro ? 99000 : 0,
+        price: body.price !== undefined ? body.price : (isPro ? 99000 : 0),
         registeredAt: body.registeredAt || new Date().toLocaleString('id-ID'),
         registeredTimestamp: Date.now(),
-        status: 'pending', // KUNCI: Wajib pending menunggu persetujuan Super Admin!
-        isNewUser: true,
+        status: body.status || 'pending', // KUNCI: Wajib pending menunggu persetujuan Super Admin!
+        isNewUser: body.isNewUser !== undefined ? body.isNewUser : true,
         premiumUpgradePending: false,
         notes: body.notes || `Pendaftaran via web (${body.plan || 'Starter'})`,
-        wallets: {
+        wallets: body.wallets || {
           'BCA Payroll': 0,
           'Mandiri Tabungan': 0,
           'GoPay': 0,
           'Dompet Cash': 0
         },
-        transactions: []
+        transactions: Array.isArray(body.transactions) ? body.transactions : [],
+        lastUpdated: Date.now()
       };
 
       users.unshift(newUser);
@@ -1613,6 +1788,139 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // POST /api/user/rehydrate (Client-Side Resilient Persistence Auto-Rehydration)
+    if (pathname === '/api/user/rehydrate' && req.method === 'POST') {
+      const body = await parseBody(req);
+      const rawPhone = (body.phone || '').trim();
+      const cleanPhone = rawPhone.replace(/\D/g, '');
+      const users = readDb();
+
+      let user = findUserByQuery(users, { phone: cleanPhone, id: body.id });
+      if (user) {
+        migrateUserSchema(user);
+        res.writeHead(200);
+        res.end(JSON.stringify({
+          success: true,
+          rehydrated: false,
+          alreadyExisted: true,
+          user: user
+        }));
+        return;
+      }
+
+      // User belum ada di server (akibat cold start) -> Pulihkan segera!
+      const isPro = (body.plan || '').includes('Pro');
+      const restoredUser = {
+        id: body.id || ('USR-' + Math.floor(1000 + Math.random() * 9000)),
+        name: body.name || 'Pengguna Terdaftar',
+        email: body.email || '',
+        phone: rawPhone,
+        plan: body.plan || (isPro ? 'TataDana Pro Lifetime' : 'TataDana Starter'),
+        price: body.price !== undefined ? body.price : (isPro ? 99000 : 0),
+        registeredAt: body.registeredAt || new Date().toLocaleString('id-ID'),
+        registeredTimestamp: body.registeredTimestamp || Date.now(),
+        status: body.status || 'pending',
+        isNewUser: body.isNewUser !== undefined ? body.isNewUser : true,
+        premiumUpgradePending: !!body.premiumUpgradePending,
+        notes: body.notes || `Dipulihkan otomatis via client rehydration (${body.plan || 'Starter'})`,
+        wallets: body.wallets || {
+          'BCA Payroll': 0,
+          'Mandiri Tabungan': 0,
+          'GoPay': 0,
+          'Dompet Cash': 0
+        },
+        transactions: Array.isArray(body.transactions) ? body.transactions : [],
+        lastUpdated: Date.now()
+      };
+
+      users.unshift(restoredUser);
+      writeDb(users);
+
+      console.log(`🔄 [AUTO-REHYDRATION] Pendaftar Berhasil Dipulihkan ke Database Server: "${restoredUser.name}" (${restoredUser.phone}) - Status: ${restoredUser.status}`);
+
+      if (restoredUser.status === 'pending') {
+        broadcastAdminEvent({
+          type: 'new_pending_user',
+          user: restoredUser,
+          pendingCount: users.filter(u => u.status === 'pending').length,
+          timestamp: Date.now()
+        });
+      }
+
+      const waAdminMsg = encodeURIComponent(
+        `Halo Super Admin TataDana (${ADMIN_CONFIG.email}),\n` +
+        `Saya ingin melakukan verifikasi pendaftaran akun TataDana:\n` +
+        `• ID Pengguna: ${restoredUser.id}\n` +
+        `• Nama Lengkap: ${restoredUser.name}\n` +
+        `• No WhatsApp: ${restoredUser.phone}\n` +
+        `• Pilihan Paket: ${restoredUser.plan}\n\n` +
+        `Mohon verifikasi dan approve akun saya. Terima kasih!`
+      );
+      const adminWaLink = `https://wa.me/${ADMIN_CONFIG.waNumber}?text=${waAdminMsg}`;
+
+      res.writeHead(200);
+      res.end(JSON.stringify({
+        success: true,
+        rehydrated: true,
+        user: restoredUser,
+        adminWaNumber: ADMIN_CONFIG.waNumber,
+        adminWaDisplay: ADMIN_CONFIG.waDisplay,
+        adminWaLink: adminWaLink
+      }));
+      return;
+    }
+
+    // POST /api/admin/sync-pending (Super Admin Resilient Pending Queue Sync & Cold Start Rehydration)
+    if (pathname === '/api/admin/sync-pending' && req.method === 'POST') {
+      const body = await parseBody(req);
+      const pendingUsers = Array.isArray(body.pendingUsers) ? body.pendingUsers : [];
+      const users = readDb();
+      let restoredCount = 0;
+
+      pendingUsers.forEach(cachedUser => {
+        if (!cachedUser || !cachedUser.phone) return;
+        const clean = String(cachedUser.phone).replace(/\D/g, '');
+        const exists = findUserByQuery(users, { phone: clean, id: cachedUser.id });
+        if (!exists) {
+          const userToRestore = {
+            id: cachedUser.id || ('USR-' + Math.floor(1000 + Math.random() * 9000)),
+            name: cachedUser.name || 'Pendaftar Tersimpan',
+            email: cachedUser.email || '',
+            phone: cachedUser.phone,
+            plan: cachedUser.plan || 'TataDana Pro Lifetime',
+            price: cachedUser.price !== undefined ? cachedUser.price : 99000,
+            registeredAt: cachedUser.registeredAt || new Date().toLocaleString('id-ID'),
+            registeredTimestamp: cachedUser.registeredTimestamp || Date.now(),
+            status: cachedUser.status || 'pending',
+            isNewUser: cachedUser.isNewUser !== undefined ? cachedUser.isNewUser : true,
+            premiumUpgradePending: !!cachedUser.premiumUpgradePending,
+            notes: cachedUser.notes || 'Dipulihkan via Admin Pending Cache',
+            wallets: cachedUser.wallets || { 'BCA Payroll': 0, 'Mandiri Tabungan': 0, 'GoPay': 0, 'Dompet Cash': 0 },
+            transactions: Array.isArray(cachedUser.transactions) ? cachedUser.transactions : [],
+            lastUpdated: Date.now()
+          };
+          users.unshift(userToRestore);
+          restoredCount++;
+        }
+      });
+
+      if (restoredCount > 0) {
+        writeDb(users);
+        console.log(`🛡️ [ADMIN PENDING SYNC] ${restoredCount} pendaftar pending berhasil dipulihkan dari cache admin.`);
+      }
+
+      const currentPending = users.filter(u => u.status === 'pending');
+      res.writeHead(200);
+      res.end(JSON.stringify({
+        success: true,
+        restoredCount: restoredCount,
+        pendingCount: currentPending.length,
+        pendingUsers: currentPending,
+        totalUsers: users.length
+      }));
+      return;
+    }
+
     // POST /api/login
     if (pathname === '/api/login' && req.method === 'POST') {
       const body = await parseBody(req);
@@ -1635,7 +1943,21 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const user = findUserByQuery(users, { phone: phone });
+      let user = findUserByQuery(users, { phone: phone });
+      
+      // Auto-rehydrate via body.userData if provided
+      if (!user && body.userData && typeof body.userData === 'object') {
+        const uData = body.userData;
+        const uPhoneClean = (uData.phone || '').replace(/\D/g, '');
+        const phoneClean = phone.replace(/\D/g, '');
+        if (uPhoneClean === phoneClean || !phoneClean) {
+          user = migrateUserSchema(uData);
+          users.unshift(user);
+          writeDb(users);
+          console.log(`🔄 [LOGIN REHYDRATION] User "${user.name}" dipulihkan saat POST /api/login.`);
+        }
+      }
+
       if (!user) {
         res.writeHead(404);
         res.end(JSON.stringify({ success: false, message: 'Nomor WhatsApp belum terdaftar. Silakan daftar akun baru.' }));

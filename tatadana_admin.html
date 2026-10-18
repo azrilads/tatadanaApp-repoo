@@ -318,6 +318,10 @@
               <p class="text-xs text-slate-300 mt-1">Pengguna baru berstatus <b class="text-amber-400 font-mono">PENDING</b> dan permintaan upgrade Premium memerlukan persetujuan / impersonate Super Admin sebelum akun aktif.</p>
             </div>
             <div class="flex items-center gap-2">
+              <button onclick="manualSyncPendingQueue()" class="bg-[#121c38] hover:bg-[#1a2952] text-amber-300 border border-amber-500/50 font-bold text-xs px-3 py-2 rounded-xl shadow transition-all flex items-center gap-1.5" title="Sinkronkan antrean pendaftar dari cache lokal ke server jika cold start terjadi">
+                <span>🛡️</span>
+                <span>Sinkronkan Antrean (Cache)</span>
+              </button>
               <button onclick="simulateNewUserRegistration()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs px-3.5 py-2.5 rounded-xl shadow transition-all">
                 + Simulasi User Baru
               </button>
@@ -800,6 +804,117 @@
     let soundEnabled = localStorage.getItem('tatadana_admin_sound') !== 'false';
     let isInitialPollDone = false;
 
+    // =========================================================================
+    // ADMIN RESILIENT PENDING QUEUE CACHE & COLD-START AUTO-SYNC ENGINE
+    // (Melindungi antrean pendaftar baru dari cold-restart Vercel Serverless)
+    // =========================================================================
+    function getAdminPendingCache() {
+      try {
+        const raw = localStorage.getItem('tatadana_admin_pending_cache');
+        const list = raw ? JSON.parse(raw) : [];
+        return Array.isArray(list) ? list : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveAdminPendingCache(pendingUsers) {
+      try {
+        const approvedIds = new Set(JSON.parse(localStorage.getItem('tatadana_admin_approved_ids') || '[]'));
+        const existing = getAdminPendingCache();
+        const map = new Map();
+        existing.forEach(u => {
+          if (u && u.id && !approvedIds.has(u.id)) map.set(u.id, u);
+        });
+        (pendingUsers || []).forEach(u => {
+          if (u && u.id && !approvedIds.has(u.id)) map.set(u.id, u);
+        });
+        const updated = Array.from(map.values());
+        localStorage.setItem('tatadana_admin_pending_cache', JSON.stringify(updated));
+        return updated;
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function removePendingFromAdminCache(userId) {
+      try {
+        const approvedIds = new Set(JSON.parse(localStorage.getItem('tatadana_admin_approved_ids') || '[]'));
+        approvedIds.add(userId);
+        localStorage.setItem('tatadana_admin_approved_ids', JSON.stringify(Array.from(approvedIds)));
+
+        const existing = getAdminPendingCache().filter(u => u.id !== userId);
+        localStorage.setItem('tatadana_admin_pending_cache', JSON.stringify(existing));
+      } catch (e) {}
+    }
+
+    let isSyncingPending = false;
+    function syncPendingWithServer(serverPendingUsers) {
+      if (isSyncingPending) return;
+      const approvedIds = new Set(JSON.parse(localStorage.getItem('tatadana_admin_approved_ids') || '[]'));
+      const cachedPending = getAdminPendingCache().filter(u => !approvedIds.has(u.id));
+
+      if (cachedPending.length === 0) {
+        if (serverPendingUsers && serverPendingUsers.length > 0) {
+          saveAdminPendingCache(serverPendingUsers);
+        }
+        return;
+      }
+
+      // Cek apakah ada pendaftar di cache admin yang HILANG di server (karena serverless cold restart)
+      const serverIds = new Set((serverPendingUsers || []).map(u => u.id));
+      const missingOnServer = cachedPending.filter(u => !serverIds.has(u.id));
+
+      if (missingOnServer.length > 0) {
+        isSyncingPending = true;
+        console.log(`🛡️ [ADMIN PENDING AUTO-SYNC] Memulihkan ${missingOnServer.length} pendaftar yang hilang dari server setelah cold start...`);
+        fetch('/api/admin/sync-pending', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pendingUsers: missingOnServer })
+        })
+        .then(res => res.json())
+        .then(data => {
+          isSyncingPending = false;
+          if (data.success && data.restoredCount > 0) {
+            showToast(
+              'Antrean Dipulihkan 🛡️',
+              `Berhasil memulihkan <b>${data.restoredCount}</b> pendaftar yang sempat hilang setelah server restart.`,
+              'success'
+            );
+            fetchLatestData();
+          }
+        })
+        .catch(() => {
+          isSyncingPending = false;
+        });
+      } else {
+        saveAdminPendingCache(serverPendingUsers);
+      }
+    }
+
+    function manualSyncPendingQueue() {
+      const cached = getAdminPendingCache();
+      if (cached.length === 0) {
+        showToast('Antrean Bersih', 'Tidak ada data antrean tersimpan di cache lokal.', 'info');
+        return;
+      }
+      showToast('Menyinkronkan...', `Mengirim ${cached.length} pendaftar tersimpan ke server...`, 'info');
+      fetch('/api/admin/sync-pending', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pendingUsers: cached })
+      })
+      .then(res => res.json())
+      .then(data => {
+        showToast('Sinkronisasi Sukses 🛡️', `Database server disinkronkan. Total antrean pending: ${data.pendingCount || 0}.`, 'success');
+        fetchLatestData();
+      })
+      .catch(() => {
+        showToast('Gagal Sinkronisasi', 'Tidak dapat menghubungi server.', 'error');
+      });
+    }
+
     function toggleAdminSound() {
       soundEnabled = !soundEnabled;
       localStorage.setItem('tatadana_admin_sound', soundEnabled ? 'true' : 'false');
@@ -1147,6 +1262,7 @@
         .then(data => {
           if (!data.success) return;
           const currentPending = data.pendingUsers || [];
+          syncPendingWithServer(currentPending);
           
           if (!isInitialPollDone) {
             isInitialPollDone = true;
@@ -1357,13 +1473,14 @@
         showToast('Info', 'Tidak ada pendaftar pending.', 'info');
         return;
       }
-      Promise.all(pendingUsers.map(u => 
-        fetch('/api/approve', {
+      Promise.all(pendingUsers.map(u => {
+        removePendingFromAdminCache(u.id);
+        return fetch('/api/approve', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: u.id })
-        }).then(r => r.json())
-      )).then(() => {
+        }).then(r => r.json());
+      })).then(() => {
         playSuccessChime();
         showToast('Semua Disetujui ✓', `Berhasil menyetujui ${pendingUsers.length} pendaftar baru sekaligus!`, 'success');
         addAuditLog('Batch Approve', `Super Admin menyetujui ${pendingUsers.length} pendaftar baru secara serentak.`);
@@ -1493,11 +1610,20 @@
         .then(res => res.json())
         .then(data => {
           if (data.success && Array.isArray(data.users)) {
-            usersList = data.users;
+            const approvedIds = new Set(JSON.parse(localStorage.getItem('tatadana_admin_approved_ids') || '[]'));
+            const cachedPending = getAdminPendingCache().filter(u => !approvedIds.has(u.id));
+            const serverUserIds = new Set(data.users.map(u => u.id));
+            const missing = cachedPending.filter(u => !serverUserIds.has(u.id));
+            usersList = [...missing, ...data.users];
             renderAllAdminViews();
             const pendingUsers = usersList.filter(u => u.status === 'pending');
             updateStickyBanner(pendingUsers);
             updateNotificationDropdown(pendingUsers);
+            if (missing.length > 0) {
+              syncPendingWithServer(data.users.filter(u => u.status === 'pending'));
+            } else {
+              saveAdminPendingCache(pendingUsers);
+            }
           }
         })
         .catch(err => {
@@ -1851,6 +1977,7 @@
 
     // ACTIONS: APPROVE / UNAPPROVE / IMPERSONATE
     function approveUser(userId) {
+      removePendingFromAdminCache(userId);
       fetch('/api/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1859,6 +1986,7 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) {
+          removePendingFromAdminCache(userId);
           const user = usersList.find(u => u.id === userId);
           if (user) user.status = 'approved';
           playSuccessChime();
@@ -1879,6 +2007,7 @@
     }
 
     function unapproveUser(userId) {
+      removePendingFromAdminCache(userId);
       fetch('/api/unapprove', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1887,6 +2016,7 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) {
+          removePendingFromAdminCache(userId);
           const user = usersList.find(u => u.id === userId);
           if (user) user.status = 'unapproved';
           addAuditLog('Unapprove User', `Akses akun ${user ? user.name : userId} dicabut / ditolak.`);
