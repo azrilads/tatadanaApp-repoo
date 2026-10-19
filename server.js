@@ -1453,21 +1453,21 @@ const server = http.createServer(async (req, res) => {
       const username = (body.username || '').trim().toLowerCase();
       const password = (body.password || '').trim();
       const pin = (body.pin || '').trim();
-      const direct = !!body.direct;
 
-      // Kredensial resmi Super Admin:
+      // Hanya kredensial resmi Super Admin yang terdaftar:
       // Email: mazrilazkia31@gmail.com, Password: azkiaazril1011112, PIN: 101112
-      const validUsername = username === 'mazrilazkia31@gmail.com' || username === 'admin' || username === 'superadmin' || username === 'admin@tatadana.id';
-      const validPassword = password === 'azkiaazril1011112' || password === '101112' || pin === '101112' || password === 'admin123' || password === '849201';
+      const validUsername = username === (ADMIN_CONFIG.email || 'mazrilazkia31@gmail.com').toLowerCase();
+      const validPassword = password === (ADMIN_CONFIG.password || 'azkiaazril1011112');
+      const validPin = pin === (ADMIN_CONFIG.pin || '101112');
 
-      if (direct || (validUsername && validPassword)) {
+      if (validUsername && validPassword && validPin) {
         res.writeHead(200);
         res.end(JSON.stringify({
           success: true,
           token: 'tatadana-superadmin-token-' + Date.now(),
           admin: {
             name: 'Super Admin Root',
-            email: 'mazrilazkia31@gmail.com',
+            email: ADMIN_CONFIG.email || 'mazrilazkia31@gmail.com',
             role: 'superadmin'
           }
         }));
@@ -1477,7 +1477,7 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(401);
       res.end(JSON.stringify({
         success: false,
-        message: 'Kredensial Super Admin salah. Gunakan email "mazrilazkia31@gmail.com" dan password "azkiaazril1011112" (PIN: 101112).'
+        message: 'Kredensial Super Admin salah.'
       }));
       return;
     }

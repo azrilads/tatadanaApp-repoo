@@ -62,18 +62,6 @@
         <p class="text-[11px] text-slate-400">Portal otentikasi resmi untuk Super Admin memverifikasi pendaftaran pengguna, pembayaran, dan impersonate akun.</p>
       </div>
 
-      <!-- Credentials Box Hint (Mudah diakses) -->
-      <div class="bg-[#0d162d] border border-amber-500/30 rounded-2xl p-3.5 space-y-1 text-xs">
-        <div class="flex items-center justify-between text-amber-300 font-bold text-[11px]">
-          <span>🔑 Kredensial Super Admin VIP Resmi:</span>
-          <span class="bg-amber-500/20 px-2 py-0.5 rounded text-[10px]">Aktif</span>
-        </div>
-        <div class="text-slate-300 font-mono text-[11px]">
-          Email: <b class="text-white">mazrilazkia31@gmail.com</b><br>
-          Password: <b class="text-white">azkiaazril1011112</b> (PIN: <b class="text-amber-300">101112</b>)
-        </div>
-      </div>
-
       <!-- Live Pending Alert on Login Screen -->
       <div id="login-screen-pending-box" class="hidden bg-rose-950/80 border border-rose-500/60 rounded-2xl p-3.5 space-y-1.5 text-xs animate-pulse shadow-lg">
         <div class="flex items-center justify-between text-rose-300 font-bold">
@@ -87,25 +75,20 @@
       <form onsubmit="handleAdminLogin(event)" class="space-y-3 text-xs">
         <div>
           <label class="block font-bold text-slate-300 mb-1">Email / Username Super Admin</label>
-          <input id="admin-user-input" type="text" value="mazrilazkia31@gmail.com" required class="w-full bg-[#070b14] border border-slate-700 text-white px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 font-medium">
+          <input id="admin-user-input" type="email" placeholder="Masukkan email Super Admin" required autocomplete="username" class="w-full bg-[#070b14] border border-slate-700 text-white px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 font-medium">
         </div>
         <div>
           <label class="block font-bold text-slate-300 mb-1">Password Super Admin</label>
-          <input id="admin-pass-input" type="password" value="azkiaazril1011112" required class="w-full bg-[#070b14] border border-slate-700 text-white px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 font-mono">
+          <input id="admin-pass-input" type="password" placeholder="Masukkan password" required autocomplete="current-password" class="w-full bg-[#070b14] border border-slate-700 text-white px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 font-mono">
         </div>
         <div>
           <label class="block font-bold text-slate-300 mb-1">PIN Otorisasi Super Admin</label>
-          <input id="admin-pin-input" type="password" value="101112" placeholder="101112" class="w-full bg-[#070b14] border border-slate-700 text-white px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 font-mono">
+          <input id="admin-pin-input" type="password" placeholder="Masukkan PIN Super Admin" required maxlength="6" autocomplete="off" class="w-full bg-[#070b14] border border-slate-700 text-white px-3.5 py-2.5 rounded-xl focus:outline-none focus:border-amber-400 font-mono">
         </div>
 
         <button type="submit" class="w-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black py-3 rounded-xl shadow-lg transition-all text-xs flex items-center justify-center gap-2">
           <span>👑</span>
           <span>Masuk ke Super Admin Console</span>
-        </button>
-
-        <button type="button" onclick="quickAdminLogin()" class="w-full bg-[#121c38] hover:bg-[#1a2952] text-amber-300 border border-amber-500/40 font-bold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow">
-          <span>⚡</span>
-          <span>Login Langsung (1-Click mazrilazkia31@gmail.com)</span>
         </button>
       </form>
 
@@ -1504,11 +1487,9 @@
 
     // Check Auth State on load
     window.addEventListener('DOMContentLoaded', () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const isAutoLogin = urlParams.get('autologin') === 'true' || urlParams.get('token') === 'superadmin';
       const storedSession = localStorage.getItem('tatadana_admin_session');
 
-      if (isAutoLogin || storedSession) {
+      if (storedSession) {
         showDashboard();
       } else {
         showLoginScreen();
@@ -1556,43 +1537,21 @@
       .then(data => {
         if (data.success) {
           localStorage.setItem('tatadana_admin_session', data.token);
-          showToast('Login Berhasil', 'Selamat datang, Super Admin VIP (mazrilazkia31@gmail.com)!', 'success');
+          showToast('Login Berhasil', 'Selamat datang, Super Admin VIP!', 'success');
           showDashboard();
         } else {
-          showToast('Gagal Masuk', data.message || 'Kredensial salah', 'error');
+          showToast('Gagal Masuk', data.message || 'Kredensial Super Admin salah.', 'error');
         }
       })
       .catch(err => {
-        // Fallback offline validation
-        if ((u === 'mazrilazkia31@gmail.com' || u === 'admin' || u === 'superadmin') &&
-            (p === 'azkiaazril1011112' || p === '101112' || pin === '101112')) {
+        // Fallback offline validation (hanya akun resmi terdaftar)
+        if (u.toLowerCase() === 'mazrilazkia31@gmail.com' && p === 'azkiaazril1011112' && pin === '101112') {
           localStorage.setItem('tatadana_admin_session', 'local-admin-token');
           showToast('Login Berhasil', 'Selamat datang, Super Admin VIP!', 'success');
           showDashboard();
         } else {
-          showToast('Gagal Masuk', 'Kredensial Super Admin salah! Gunakan mazrilazkia31@gmail.com dan azkiaazril1011112 / PIN 101112.', 'error');
+          showToast('Gagal Masuk', 'Kredensial Super Admin salah atau koneksi server bermasalah.', 'error');
         }
-      });
-    }
-
-    function quickAdminLogin() {
-      document.getElementById('admin-user-input').value = 'mazrilazkia31@gmail.com';
-      document.getElementById('admin-pass-input').value = 'azkiaazril1011112';
-      if (document.getElementById('admin-pin-input')) document.getElementById('admin-pin-input').value = '101112';
-      fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'mazrilazkia31@gmail.com', password: 'azkiaazril1011112', pin: '101112' })
-      })
-      .then(res => res.json())
-      .then(data => {
-        localStorage.setItem('tatadana_admin_session', data.token || 'direct-admin-token');
-        showToast('Login Cepat Berhasil', 'Masuk sebagai Super Admin VIP via 1-Click!', 'success');
-        showDashboard();
-      })
-      .catch(() => {
-        localStorage.setItem('tatadana_admin_session', 'direct-admin-token');
-        showDashboard();
       });
     }
 
